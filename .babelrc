@@ -1,0 +1,25 @@
+{
+  "env": {
+    "development": {
+      "presets": [
+        "env"
+      ],
+      "plugins": [
+        "transform-runtime",
+        "transform-object-rest-spread"
+      ]
+    },
+    "production": {
+      "presets": [
+        "env"
+      ],
+      "plugins": [
+        "transform-runtime",
+        "transform-object-rest-spread"
+      ]
+    },
+    "ignore": [
+      "node_modules"
+    ]
+  }
+}
