@@ -175,7 +175,6 @@ const conf = convict({
     }
 });
 
-
 //Build queue DSN
 //redis://[:password@]host[:port][/db-number][?option=value]
 const getRedisDsn = (config) => {
@@ -184,9 +183,5 @@ const getRedisDsn = (config) => {
 };
 
 conf.set('api.queue.dsn', getRedisDsn(conf));
-
-export const validate = () => {
-    return conf.validate({strict: true});
-};
 
 export default conf.getProperties();

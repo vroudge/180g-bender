@@ -19,10 +19,17 @@ export default class Juno {
 
                 await this.page.goto(variant);
                 await this.page.click('.btn.btn-cta.mb-2.ml-2');
+                console.log('passherehehre');
+                
             }
+            console.log('done adding');
 
             await this.page.goto('https://www.juno.co.uk/cart/');
+            console.log('done goto');
+
             await this.page.select('select.delivery_country', `75`);
+            console.log('done select');
+
             await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
             await this.page.waitForSelector(`#shipping_val`);
 
@@ -31,14 +38,19 @@ export default class Juno {
             });
 
             if (checkout) {
+                console.log('pass checkout');
+
                 await this.login();
                 await this.fillShippingInfo();
             } else {
+                console.log('return data');
+
                 return {type: 'shipping', value: shippingPriceRaw};
             }
 
         } catch (e) {
-            return new Error(e);
+            logger.err('Error in juno bender flow', e);
+            throw e;
         }
     }
 
