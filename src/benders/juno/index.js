@@ -17,6 +17,17 @@ export default class Juno {
         this.page = await bro.newPage();
 
         try {
+            await this.page.setRequestInterception(true);
+            this.page.on('request', request => {
+                const intercepted = ['image', 'font'];
+
+                if (intercepted.includes(request.resourceType)) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
+            });
+
             for (const [value, index] of variants.entries()) {
                 await this.page.goto(index.shopId);
 

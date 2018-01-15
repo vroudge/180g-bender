@@ -1,4 +1,5 @@
 import config from '../../config';
+import _ from 'lodash';
 
 export default class Hardwax {
     constructor(browserInstance, {variants, destinationAddress}) {
@@ -14,11 +15,36 @@ export default class Hardwax {
 
         this.page = await bro.newPage();
         try {
-            for (const variant of variants) {
-                const variantUrl = `https://hardwax.com/basket/add/${variant.split(`/`)[3]}/`;
-                console.log(`hardwax open ${variantUrl}`);
+            await this.page.setRequestInterception(true);
+            this.page.on('request', request => {
+                const intercepted = ['image', 'font'];
 
-                await this.page.goto(variantUrl);
+                if (intercepted.includes(request.resourceType)) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
+            });
+
+            for (const [value, index] of variants.entries()) {
+                await this.page.goto(index.shopId);
+
+                const itemIsAvailable = await this.page.evaluate(()=>{
+                    return !document.querySelector(`div.add_order.fright`).textContent.includes(`out of stock`);
+                });
+
+                this.variants[value].available = itemIsAvailable;
+
+                await this.page.click(`div.add_order.fright`);
+
+                if (!itemIsAvailable)  {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
+                    const endOfArray = value + 1 === variants.length;
+
+                    if (endOfArray && allUnavailable) {
+                        return {type: 'availability', value: 'all-unavailable'}
+                    }
+                }
             }
             await this.page.goto(`https://hardwax.com/basket/my-details/`);
             await this.fillShippingInfo();
@@ -31,10 +57,10 @@ export default class Hardwax {
             const frame = await this.waitForFrame(this.page, frameName);
             await this.page.waitForSelector(`#id_shipping_option`);
 
-            const shippingPriceRaw = await this.page.evaluate(() => {
+            const shippingPrice = await this.page.evaluate(() => {
                 const listbox = document.querySelector('#id_shipping_option');
                 const selIndex = listbox.selectedIndex;
-                return listbox.options[selIndex].text;
+                return listbox.options[selIndex].text.split('€ ')[1];
             });
 
             if (checkout) {
@@ -43,10 +69,10 @@ export default class Hardwax {
                 await this.page.click(`#id_send_order`);
                 return {type: 'checkout', value: 'success'}
             } else {
-                return {type: 'shipping', value: shippingPriceRaw};
+                return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
             }
         } catch (e) {
-            throw new Error(e);
+            console.log(e);
         }
     }
 
@@ -89,7 +115,7 @@ export default class Hardwax {
         await this.page.type(`#id_shipping_address`, `${this.destinationAddress.line1} ${this.destinationAddress.line2}`);
         await this.page.type(`#id_shipping_zip`, this.destinationAddress.zip);
         await this.page.type(`#id_shipping_city`, this.destinationAddress.city);
-        await this.page.select(`#id_shipping_country`, `GB`)
+        await this.page.select(`#id_shipping_country`, this.destinationAddress.country.toUpperCase())
     }
 
     static async fillPaymentInfo(frame) {
