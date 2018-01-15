@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import config from '../../config';
 
 export default class Rushhour {
@@ -16,23 +18,41 @@ export default class Rushhour {
         try {
             await this.login();
 
-            for (const variant of variants) {
-                console.log(`rushhour open ${variant}`);
-                const id = variant.split('item=')[1];
+            for (const [value, index] of variants.entries()) {
+                console.log(`rushhour open ${index.shopId}`);
+
+                const id = index.shopId.split('item=')[1];
                 const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
+
                 await this.page.goto(addToCart);
+                const itemIsAvailable = await this.page.evaluate(()=>{
+                    return !document.querySelector(`#message`).textContent.includes(`out of stock`);
+                });
+
+                this.variants[value].available = itemIsAvailable;
+
+                if (!itemIsAvailable) {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
+                    const endOfArray = value + 1 === variants.length;
+
+                    if (endOfArray && allUnavailable) {
+                        return {type: 'availability', value: 'all-unavailable'}
+                    }
+                }
             }
+
             await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
             await this.fillShippingInfo();
             await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
             await this.page.waitForSelector(`#shipment > select`);
-            console.log('before shipping');
 
-            const shippingPriceRaw = await this.page.evaluate(() => {
+            const shippingPrice = await this.page.evaluate(() => {
                 document.querySelector('#shipment > select').value = 4;
                 document.querySelector(`#shipment > select`).onchange();
-                return document.querySelector('#shipment > select > option:nth-child(2)').textContent
+                const text = document.querySelector('#shipment > select > option:nth-child(2)').textContent;
+                return text.split('€ ')[1].split(',')[0]
             });
+
             await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
             await this.page.evaluate(() => {
                 document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
@@ -57,9 +77,13 @@ export default class Rushhour {
 
                 return {type: 'checkout', value: 'success'}
             } else {
-                return {type: 'shipping', value: shippingPriceRaw};
+                console.log('DONE');
+
+                return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
             }
         } catch (e) {
+            console.error(e);
+
             throw e;
         }
     }
