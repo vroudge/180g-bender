@@ -8,7 +8,7 @@ export default (job, ctx, done) => ({
     jobName: 'get-shipping',
     concurrency: 1,
     processor: async (job, ctx, done) => {
-        let browser;
+        let browser, result;
         try {
             const {retailers, cart, destinationAddress} = job.data;
             const orderRaw = cart.content.vinyls;
@@ -28,12 +28,14 @@ export default (job, ctx, done) => ({
             });
 
             const variants = _.reduce(order, (acc, elem) => {
+                const {variantId, shopId} = elem;
+
                 if (!acc[elem.retailer]) {
                     acc[elem.retailer] = [];
                 }
 
                 for (let quantity of _.range(elem.quantity)) {
-                    acc[elem.retailer].push(elem.shopId);
+                    acc[elem.retailer].push({variantId, shopId});
                 }
 
                 return acc;
@@ -41,21 +43,19 @@ export default (job, ctx, done) => ({
 
             browser = await puppeteer.launch({headless: false, args: ['--no-sandbox', '--disable-setuid-sandbox']});
 
-            const kek = await Promise.all(
+            result = await Promise.all(
                 _.map(variants, async (elem, key) => {
-                    return await (new Benders[key](browser, {
+                    return (await new Benders[key](browser, {
                         variants: elem,
                         destinationAddress
                     })).start({checkout: false});
                 })
             );
+            await browser.close();
         } catch (e) {
-            console.log(e);
-
-            logger.err(e);
             await browser.close();
             return done(e);
         }
-        return done();
+        return done(null, JSON.stringify(result));
     },
 });

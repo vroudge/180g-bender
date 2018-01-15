@@ -1,4 +1,8 @@
+import _ from 'lodash';
+
 import config from '../../config';
+import logger from '../../lib/logger'
+import junoCountryCodes from './countryCodesMap'
 
 export default class Juno {
     constructor(browserInstance, {variants, destinationAddress}) {
@@ -10,45 +14,49 @@ export default class Juno {
 
     async start({checkout}) {
         const {variants, bro} = this;
-
         this.page = await bro.newPage();
 
         try {
-            for (const variant of variants) {
-                console.log(`juno open ${variant}`);
+            for (const [value, index] of variants.entries()) {
+                await this.page.goto(index.shopId);
 
-                await this.page.goto(variant);
-                await this.page.click('.btn.btn-cta.mb-2.ml-2');
-                console.log('passherehehre');
-                
+                const itemIsAvailable = await this.page.evaluate(() => {
+                    return document.querySelectorAll('a.btn.btn-cta.btn-prod-alert.mb-2').length === 0;
+                });
+
+                this.variants[value].available = itemIsAvailable;
+
+                if (itemIsAvailable) {
+                    await this.page.click('.btn.btn-cta.mb-2.ml-2');
+                } else {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
+                    const endOfArray = value + 1 === variants.length;
+
+                    if (endOfArray && allUnavailable) {
+                        return {type: 'availability', value: 'all-unavailable'}
+                    }
+                }
             }
-            console.log('done adding');
 
             await this.page.goto('https://www.juno.co.uk/cart/');
-            console.log('done goto');
-
-            await this.page.select('select.delivery_country', `75`);
-            console.log('done select');
-
+            await this.page.waitForSelector(`select.delivery_country`);
+            await this.page.select('select.delivery_country', junoCountryCodes[this.destinationAddress.country]);
             await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
             await this.page.waitForSelector(`#shipping_val`);
-
-            const shippingPriceRaw = await this.page.evaluate(() => {
-                return document.querySelectorAll(`#shipping_val`)[0].textContent;
+            const shippingPrice = await this.page.evaluate(() => {
+                return document.querySelectorAll(`#shipping_val`)[0].textContent.replace('€', '');
             });
 
             if (checkout) {
-                console.log('pass checkout');
-
                 await this.login();
                 await this.fillShippingInfo();
             } else {
-                console.log('return data');
-
-                return {type: 'shipping', value: shippingPriceRaw};
+                return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
             }
 
         } catch (e) {
+            console.error(e);
+
             logger.err('Error in juno bender flow', e);
             throw e;
         }
