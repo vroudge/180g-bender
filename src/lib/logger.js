@@ -30,7 +30,7 @@ export default (() => {
                 logmatic: {
                     token: config.api.logmatic.token,
                     defaultProps: {
-                        appname: 'recommender',
+                        appname: 'bender',
                         hostname: config.env,
                         createdAt: new Date(),
                     },

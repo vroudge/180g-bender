@@ -12,7 +12,7 @@ export default (job, ctx, done) => ({
         try {
             const {retailers, cart, destinationAddress} = job.data;
             const orderRaw = cart.content.vinyls;
-
+            logger.nfo('Querying shipping data in retailers', job.data.cart);
             //cleanup cart object for use
             const order = _.map(orderRaw, (elem, key) => {
                 const retailerForVariant = _.find(retailers, retailer => retailer.id === elem.retailerId).name;
@@ -41,7 +41,7 @@ export default (job, ctx, done) => ({
                 return acc;
             }, {});
 
-            browser = await puppeteer.launch({headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox']});
+            browser = await puppeteer.launch({headless: false, args: ['--no-sandbox', '--disable-setuid-sandbox']});
 
             result = await Promise.all(
                 _.map(variants, async (elem, key) => {

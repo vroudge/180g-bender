@@ -1,4 +1,5 @@
 import config from '../../config';
+import _ from 'lodash';
 
 export default class emile {
     constructor(browserInstance, {variants, destinationAddress}) {
@@ -11,53 +12,87 @@ export default class emile {
     async start({checkout}) {
         const {variants, bro} = this;
         this.page = await bro.newPage();
-
         try {
-            for (const variant of variants) {
-                await this.page.goto(variant);
+
+
+            await this.page.setRequestInterception(true);
+            this.page.on('request', request => {
+                const intercepted = ['image', 'font'];
+
+                if (intercepted.includes(request.resourceType)) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
+            });
+
+            for (const [value, index] of variants.entries()) {
+                await this.page.goto(index.shopId);
                 await this.page.waitForSelector(`a.btn.btn-default.button.addToBasket`);
-                await this.page.click(`a.btn.btn-default.button.addToBasket`);
-                await this.page.waitFor(1000);
+
+                const itemIsAvailable = await this.page.evaluate(() => {
+                    return !document.querySelector('a.addToBasket').textContent.includes(`Out of stock`);
+                });
+
+                this.variants[value].available = itemIsAvailable;
+
+                if (itemIsAvailable) {
+                    await this.page.click(`a.btn.btn-default.button.addToBasket`);
+                    await this.page.waitFor(1000);
+
+                } else {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
+                    const endOfArray = value + 1 === variants.length;
+
+                    if (endOfArray && allUnavailable) {
+                        return {type: 'availability', value: 'all-unavailable'}
+                    }
+                }
             }
 
             await this.page.goto(`https://chezemile-records.com/home`);
-            await this.fillShippingInfos();
+            await this.page.waitFor(4000);
+            await this.page.select(`select.countrySelect`, 'France');
 
-            const shippingPriceRaw = await this.page.evaluate(() => {
-                return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`).textContent;
-            });
+            await this.fillShippingInfos();
 
             if (checkout) {
                 await this.fillPaymentInfo();
-                return {type: 'checkout', value:'success'};
+                return {type: 'checkout', value: 'success'};
             } else {
-                return {type: 'shipping', value: 'success'};
+                const shippingPrice = await this.page.evaluate(() => {
+                    return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`)
+                        .textContent.replace('€', '');
+                });
+
+                return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
             }
         } catch (e) {
-            throw new Error(e);
+            console.error(e);
+
         }
     }
 
     async fillShippingInfos() {
-        await this.page.click(`#homeRight > div > form:nth-child(2) > div > label:nth-child(2) > input`);
-        await this.page.waitForSelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`);
-        await this.page.select(`#checkoutForm > fieldset > div:nth-child(2) > div > div > select`, 'France');
-        await this.page.waitFor(2000);
+        try {
+            await this.page.waitForSelector([
+                `#basicUserInfo > div:nth-child(1) > div > input`,
+                `#basicUserInfo > div:nth-child(2) > div > input`,
+                `#checkoutForm > fieldset > div.control-group > div:nth-child(2) > div:nth-child(2) > div > div > input`,
+            ]);
 
-        await this.page.waitForSelector([
-            `#basicUserInfo > div:nth-child(1) > div > input`,
-            `#basicUserInfo > div:nth-child(2) > div > input`,
-            `#checkoutForm > fieldset > div.control-group > div:nth-child(2) > div:nth-child(2) > div > div > input`,
-        ]);
+            await this.page.type(`#basicUserInfo > div:nth-child(1) > div > input`, this.destinationAddress.first_name);
+            await this.page.type(`#basicUserInfo > div:nth-child(2) > div > input`, this.destinationAddress.last_name);
+            await this.page.type(`#checkoutForm > fieldset > div.control-group > div:nth-child(2) > div:nth-child(2) > div > div > input`, config.gram.email);
+            await this.page.type(`#addressLine1`, this.destinationAddress.line1);
+            await this.page.type(`#addressLine2`, this.destinationAddress.line2);
+            await this.page.type(`#city`, this.destinationAddress.city);
+            await this.page.type(`#postCode`, this.destinationAddress.zip);
+            console.log('9');
+        } catch (e) {
+            console.log(e);
 
-        await this.page.type(`#basicUserInfo > div:nth-child(1) > div > input`, this.destinationAddress.first_name);
-        await this.page.type(`#basicUserInfo > div:nth-child(2) > div > input`, this.destinationAddress.last_name);
-        await this.page.type(`#checkoutForm > fieldset > div.control-group > div:nth-child(2) > div:nth-child(2) > div > div > input`, config.gram.email);
-        await this.page.type(`#addressLine1`, this.destinationAddress.line1);
-        await this.page.type(`#addressLine2`, this.destinationAddress.line2);
-        await this.page.type(`#city`, this.destinationAddress.city);
-        await this.page.type(`#checkoutForm > fieldset > div:nth-child(5) > div:nth-child(2) > div > div > input`, this.destinationAddress.state);
-        await this.page.type(`#postCode`, this.destinationAddress.zip);
+        }
     }
 
     async fillPaymentInfo() {

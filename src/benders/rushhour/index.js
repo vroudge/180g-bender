@@ -15,76 +15,81 @@ export default class Rushhour {
 
         this.page = await bro.newPage();
 
-        try {
-            await this.login();
+        await this.page.setRequestInterception(true);
+        this.page.on('request', request => {
+            const intercepted = ['image', 'font'];
 
-            for (const [value, index] of variants.entries()) {
-                console.log(`rushhour open ${index.shopId}`);
+            if (intercepted.includes(request.resourceType)) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        });
 
-                const id = index.shopId.split('item=')[1];
-                const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
+        await this.login();
 
-                await this.page.goto(addToCart);
-                const itemIsAvailable = await this.page.evaluate(()=>{
-                    return !document.querySelector(`#message`).textContent.includes(`out of stock`);
-                });
+        for (const [value, index] of variants.entries()) {
+            console.log(`rushhour open ${index.shopId}`);
 
-                this.variants[value].available = itemIsAvailable;
+            const id = index.shopId.split('item=')[1];
+            const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
 
-                if (!itemIsAvailable) {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
+            await this.page.goto(addToCart);
+            const itemIsAvailable = await this.page.evaluate(() => {
+                return !document.querySelector(`#message`).textContent.includes(`out of stock`);
+            });
 
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'availability', value: 'all-unavailable'}
-                    }
+            this.variants[value].available = itemIsAvailable;
+
+            if (!itemIsAvailable) {
+                const allUnavailable = _.filter(variants, 'available').length === 0;
+                const endOfArray = value + 1 === variants.length;
+
+                if (endOfArray && allUnavailable) {
+                    return {type: 'availability', value: 'all-unavailable'}
                 }
             }
+        }
 
-            await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
-            await this.fillShippingInfo();
-            await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
-            await this.page.waitForSelector(`#shipment > select`);
+        await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
+        await this.fillShippingInfo();
+        await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
+        await this.page.waitForSelector(`#shipment > select`);
 
-            const shippingPrice = await this.page.evaluate(() => {
-                document.querySelector('#shipment > select').value = 4;
-                document.querySelector(`#shipment > select`).onchange();
-                const text = document.querySelector('#shipment > select > option:nth-child(2)').textContent;
-                return text.split('€ ')[1].split(',')[0]
-            });
+        const shippingPrice = await this.page.evaluate(() => {
+            document.querySelector('#shipment > select').value = 4;
+            document.querySelector(`#shipment > select`).onchange();
+            const text = document.querySelector('#shipment > select > option:nth-child(2)').textContent;
+            return text.split('€ ')[1].split(',')[0]
+        });
 
-            await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
+        await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
+        await this.page.evaluate(() => {
+            document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
+            document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
+        });
+
+        if (checkout) {
+            console.log('enter checkout');
+            await this.page.waitForSelector(`input.bttn`);
+            console.log('done waiting selector');
+            await this.page.waitFor(1000);
             await this.page.evaluate(() => {
-                document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
-                document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
+                document.querySelectorAll(`input.bttn`)[0].click()
             });
+            await this.page.waitForSelector([
+                '#Ecom_Payment_Card_Number',
+                '#Ecom_Payment_Card_ExpDate_Month',
+                '#Ecom_Payment_Card_ExpDate_Year',
+                '#Ecom_Payment_Card_Verification'
+            ]);
+            await this.fillCreditCardInfo();
 
-            if (checkout) {
-                console.log('enter checkout');
-                await this.page.waitForSelector(`input.bttn`);
-                console.log('done waiting selector');
-                await this.page.waitFor(1000);
-                await this.page.evaluate(() => {
-                    document.querySelectorAll(`input.bttn`)[0].click()
-                });
-                await this.page.waitForSelector([
-                    '#Ecom_Payment_Card_Number',
-                    '#Ecom_Payment_Card_ExpDate_Month',
-                    '#Ecom_Payment_Card_ExpDate_Year',
-                    '#Ecom_Payment_Card_Verification'
-                ]);
-                await this.fillCreditCardInfo();
+            return {type: 'checkout', value: 'success'}
+        } else {
+            console.log('DONE');
 
-                return {type: 'checkout', value: 'success'}
-            } else {
-                console.log('DONE');
-
-                return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
-            }
-        } catch (e) {
-            console.error(e);
-
-            throw e;
+            return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
         }
     }
 

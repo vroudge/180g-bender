@@ -14,65 +14,62 @@ export default class Hardwax {
         const {variants, bro} = this;
 
         this.page = await bro.newPage();
-        try {
-            await this.page.setRequestInterception(true);
-            this.page.on('request', request => {
-                const intercepted = ['image', 'font'];
 
-                if (intercepted.includes(request.resourceType)) {
-                    request.abort();
-                } else {
-                    request.continue();
-                }
-            });
+        await this.page.setRequestInterception(true);
+        this.page.on('request', request => {
+            const intercepted = ['image', 'font'];
 
-            for (const [value, index] of variants.entries()) {
-                await this.page.goto(index.shopId);
-
-                const itemIsAvailable = await this.page.evaluate(()=>{
-                    return !document.querySelector(`div.add_order.fright`).textContent.includes(`out of stock`);
-                });
-
-                this.variants[value].available = itemIsAvailable;
-
-                await this.page.click(`div.add_order.fright`);
-
-                if (!itemIsAvailable)  {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
-
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'availability', value: 'all-unavailable'}
-                    }
-                }
-            }
-            await this.page.goto(`https://hardwax.com/basket/my-details/`);
-            await this.fillShippingInfo();
-            await this.page.click(`#submit`);
-            await this.page.waitForSelector(`#id_send_order`);
-
-            //wait for stripe iframe to be loaded
-            await this.page.waitForSelector(`#id_card_element > div > iframe`);
-            const frameName = `__privateStripeFrame3`;
-            const frame = await this.waitForFrame(this.page, frameName);
-            await this.page.waitForSelector(`#id_shipping_option`);
-
-            const shippingPrice = await this.page.evaluate(() => {
-                const listbox = document.querySelector('#id_shipping_option');
-                const selIndex = listbox.selectedIndex;
-                return listbox.options[selIndex].text.split('€ ')[1];
-            });
-
-            if (checkout) {
-                await Hardwax.fillPaymentInfo(frame);
-                await this.page.click(`#id_accept`);
-                await this.page.click(`#id_send_order`);
-                return {type: 'checkout', value: 'success'}
+            if (intercepted.includes(request.resourceType)) {
+                request.abort();
             } else {
-                return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
+                request.continue();
             }
-        } catch (e) {
-            console.log(e);
+        });
+
+        for (const [value, index] of variants.entries()) {
+            await this.page.goto(index.shopId);
+
+            const itemIsAvailable = await this.page.evaluate(() => {
+                return !document.querySelector(`div.add_order.fright`).textContent.includes(`out of stock`);
+            });
+
+            this.variants[value].available = itemIsAvailable;
+
+            await this.page.click(`div.add_order.fright`);
+
+            if (!itemIsAvailable) {
+                const allUnavailable = _.filter(variants, 'available').length === 0;
+                const endOfArray = value + 1 === variants.length;
+
+                if (endOfArray && allUnavailable) {
+                    return {type: 'availability', value: 'all-unavailable'}
+                }
+            }
+        }
+        await this.page.goto(`https://hardwax.com/basket/my-details/`);
+        await this.fillShippingInfo();
+        await this.page.click(`#submit`);
+        await this.page.waitForSelector(`#id_send_order`);
+
+        //wait for stripe iframe to be loaded
+        await this.page.waitForSelector(`#id_card_element > div > iframe`);
+        const frameName = `__privateStripeFrame3`;
+        const frame = await this.waitForFrame(this.page, frameName);
+        await this.page.waitForSelector(`#id_shipping_option`);
+
+        const shippingPrice = await this.page.evaluate(() => {
+            const listbox = document.querySelector('#id_shipping_option');
+            const selIndex = listbox.selectedIndex;
+            return listbox.options[selIndex].text.split('€ ')[1];
+        });
+
+        if (checkout) {
+            await Hardwax.fillPaymentInfo(frame);
+            await this.page.click(`#id_accept`);
+            await this.page.click(`#id_send_order`);
+            return {type: 'checkout', value: 'success'}
+        } else {
+            return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
         }
     }
 
