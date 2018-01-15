@@ -1,5 +1,6 @@
 import config from '../../config';
 import _ from 'lodash';
+import emileCountryCodes from './countryCodesMap';
 
 export default class emile {
     constructor(browserInstance, {variants, destinationAddress}) {
@@ -52,7 +53,7 @@ export default class emile {
 
             await this.page.goto(`https://chezemile-records.com/home`);
             await this.page.waitFor(4000);
-            await this.page.select(`select.countrySelect`, 'France');
+            await this.page.select(`select.countrySelect`, emileCountryCodes[this.destinationAddress.country]);
 
             await this.fillShippingInfos();
 
