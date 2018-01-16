@@ -31,11 +31,11 @@ export default (job, ctx, done) => ({
                 const {variantId, shopId} = elem;
 
                 if (!acc[elem.retailer]) {
-                    acc[elem.retailer] = [];
+                    acc[elem.retailer] = {arr: [], retailerId: elem.retailerId};
                 }
 
                 for (let quantity of _.range(elem.quantity)) {
-                    acc[elem.retailer].push({variantId, shopId});
+                    acc[elem.retailer].arr.push({variantId, shopId});
                 }
 
                 return acc;
@@ -46,8 +46,9 @@ export default (job, ctx, done) => ({
             result = await Promise.all(
                 _.map(variants, async (elem, key) => {
                     return (await new Benders[key](browser, {
-                        variants: elem,
-                        destinationAddress
+                        variants: elem.arr,
+                        destinationAddress,
+                        retailerId: elem.retailerId
                     })).start({checkout: false});
                 })
             );

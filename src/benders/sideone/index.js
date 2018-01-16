@@ -1,9 +1,10 @@
 import config from '../../config';
 
 export default class sideone {
-    constructor(browserInstance, {variants, destinationAddress}) {
+    constructor(browserInstance, {variants, retailerId, destinationAddress}) {
         this.variants = variants;
         this.bro = browserInstance;
+        this.retailerId = retailerId;
         this.destinationAddress = destinationAddress;
         this.page = null;
     }
@@ -40,7 +41,7 @@ export default class sideone {
             if (checkout) {
                 return {type: 'checkout', value: 'success'};
             } else {
-                return {type: 'shipping', value: shippingPriceRaw};
+                return {type: 'shipping', retailerId: this.retailerId, value: shippingPriceRaw};
             }
         } catch (e) {
             throw new Error(e);

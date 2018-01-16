@@ -3,9 +3,10 @@ import _ from 'lodash';
 import config from '../../config';
 
 export default class Rushhour {
-    constructor(browserInstance, {variants, destinationAddress}) {
+    constructor(browserInstance, {variants, retailerId, destinationAddress}) {
         this.variants = variants;
         this.bro = browserInstance;
+        this.retailerId = retailerId;
         this.destinationAddress = destinationAddress;
         this.page = null;
     }
@@ -89,7 +90,7 @@ export default class Rushhour {
         } else {
             console.log('DONE');
 
-            return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
+            return {type: 'shipping', retailerId: this.retailerId, shipping: {price: shippingPrice, currency: 'eur'}, variants};
         }
     }
 

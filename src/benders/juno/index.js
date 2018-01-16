@@ -5,9 +5,10 @@ import logger from '../../lib/logger'
 import junoCountryCodes from './countryCodesMap'
 
 export default class Juno {
-    constructor(browserInstance, {variants, destinationAddress}) {
+    constructor(browserInstance, {variants, retailerId, destinationAddress}) {
         this.variants = variants;
         this.bro = browserInstance;
+        this.retailerId = retailerId;
         this.destinationAddress = destinationAddress;
         this.page = null;
     }
@@ -61,7 +62,7 @@ export default class Juno {
             await this.login();
             await this.fillShippingInfo();
         } else {
-            return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
+            return {type: 'shipping', retailerId: this.retailerId, shipping: {price: shippingPrice, currency: 'eur'}, variants};
         }
     }
 

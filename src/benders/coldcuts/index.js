@@ -2,9 +2,10 @@ import config from '../../config';
 import _ from 'lodash';
 
 export default class emile {
-    constructor(browserInstance, {variants, destinationAddress}) {
+    constructor(browserInstance, {retailerId, variants, destinationAddress}) {
         this.variants = variants;
         this.bro = browserInstance;
+        this.retailerId = retailerId;
         this.destinationAddress = destinationAddress;
         this.page = null;
     }
@@ -32,8 +33,6 @@ export default class emile {
                 const itemIsAvailable = await this.page.evaluate(() => {
                     return document.querySelectorAll('#add-to-cart').length !== 0;
                 });
-                console.log('item available?', itemIsAvailable);
-
                 this.variants[value].available = itemIsAvailable;
 
                 if (itemIsAvailable) {
@@ -42,13 +41,11 @@ export default class emile {
                     });
                     await this.page.waitFor(1000);
                 } else {
-                    console.log('passing in end');
-
                     const allUnavailable = _.filter(variants, 'available').length === 0;
                     const endOfArray = value + 1 === variants.length;
 
                     if (endOfArray && allUnavailable) {
-                        return {type: 'availability', value: 'all-unavailable'}
+                        return {type: 'availability', retailerId: this.retailerId, value: 'all-unavailable'}
                     }
                 }
             }
@@ -66,7 +63,12 @@ export default class emile {
             if (checkout) {
 
             } else {
-                return {type: 'shipping', shipping: {price: parseFloat(shippingPrice), currency: 'gbp'}, variants};
+                return {
+                    type: 'shipping',
+                    retailerId: this.retailerId,
+                    shipping: {price: parseFloat(shippingPrice), currency: 'gbp'},
+                    variants
+                };
             }
         } catch (e) {
             console.log(e);

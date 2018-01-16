@@ -3,10 +3,11 @@ import _ from 'lodash';
 import emileCountryCodes from './countryCodesMap';
 
 export default class emile {
-    constructor(browserInstance, {variants, destinationAddress}) {
+    constructor(browserInstance, {variants, retailerId, destinationAddress}) {
         this.variants = variants;
         this.bro = browserInstance;
         this.destinationAddress = destinationAddress;
+        this.retailerId = retailerId;
         this.page = null;
     }
 
@@ -66,7 +67,7 @@ export default class emile {
                         .textContent.replace('€', '');
                 });
 
-                return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
+                return {type: 'shipping', retailerId: this.retailerId, shipping: {price: shippingPrice, currency: 'eur'}, variants};
             }
         } catch (e) {
             console.error(e);

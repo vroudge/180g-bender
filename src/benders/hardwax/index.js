@@ -2,10 +2,10 @@ import config from '../../config';
 import _ from 'lodash';
 
 export default class Hardwax {
-    constructor(browserInstance, {variants, destinationAddress}) {
+    constructor(browserInstance, {variants, destinationAddress, retailerId}) {
         this.variants = variants;
         this.bro = browserInstance;
-
+        this.retailerId = retailerId;
         this.destinationAddress = destinationAddress;
         this.page = null;
     }
@@ -69,7 +69,12 @@ export default class Hardwax {
             await this.page.click(`#id_send_order`);
             return {type: 'checkout', value: 'success'}
         } else {
-            return {type: 'shipping', shipping: {price: shippingPrice, currency: 'eur'}, variants};
+            return {
+                type: 'shipping',
+                retailerId: this.retailerId,
+                shipping: {price: shippingPrice, currency: 'eur'},
+                variants
+            };
         }
     }
 
@@ -130,7 +135,6 @@ export default class Hardwax {
         await ccExpiry.type(config.finance.expiryMonth);
         await ccExpiry.type(config.finance.expiryYearShort);
         await ccCvv.type(config.finance.cvv);
-        console.log('OK');
     }
 
     async waitForFrame(page, frameName) {
