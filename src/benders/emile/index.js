@@ -47,7 +47,7 @@ export default class emile {
                     const endOfArray = value + 1 === variants.length;
 
                     if (endOfArray && allUnavailable) {
-                        return {type: 'availability', value: 'all-unavailable'}
+                        return {type: 'all-unavailable', retailerId: this.retailerId, variants}
                     }
                 }
             }
@@ -67,7 +67,12 @@ export default class emile {
                         .textContent.replace('€', '');
                 });
 
-                return {type: 'shipping', retailerId: this.retailerId, shipping: {price: shippingPrice, currency: 'eur'}, variants};
+                return {
+                    type: 'shipping',
+                    retailerId: this.retailerId,
+                    shipping: {price: shippingPrice, currency: 'eur'},
+                    variants
+                };
             }
         } catch (e) {
             console.error(e);

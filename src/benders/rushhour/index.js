@@ -30,8 +30,6 @@ export default class Rushhour {
         await this.login();
 
         for (const [value, index] of variants.entries()) {
-            console.log(`rushhour open ${index.shopId}`);
-
             const id = index.shopId.split('item=')[1];
             const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
 
@@ -47,7 +45,7 @@ export default class Rushhour {
                 const endOfArray = value + 1 === variants.length;
 
                 if (endOfArray && allUnavailable) {
-                    return {type: 'availability', value: 'all-unavailable'}
+                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
                 }
             }
         }
@@ -88,8 +86,6 @@ export default class Rushhour {
 
             return {type: 'checkout', value: 'success'}
         } else {
-            console.log('DONE');
-
             return {type: 'shipping', retailerId: this.retailerId, shipping: {price: shippingPrice, currency: 'eur'}, variants};
         }
     }

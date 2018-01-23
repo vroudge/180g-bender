@@ -4,6 +4,7 @@ import hardwax from './hardwax'
 import emile from './emile'
 import sideone from './sideone'
 import coldcuts from './coldcuts'
+import misbits from './misbits'
 
 export {
     juno,
@@ -11,5 +12,6 @@ export {
     hardwax,
     emile,
     sideone,
-    coldcuts
+    coldcuts,
+    misbits,
 }

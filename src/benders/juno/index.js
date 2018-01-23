@@ -44,7 +44,7 @@ export default class Juno {
                 const endOfArray = value + 1 === variants.length;
 
                 if (endOfArray && allUnavailable) {
-                    return {type: 'availability', value: 'all-unavailable'}
+                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
                 }
             }
         }
@@ -62,7 +62,12 @@ export default class Juno {
             await this.login();
             await this.fillShippingInfo();
         } else {
-            return {type: 'shipping', retailerId: this.retailerId, shipping: {price: shippingPrice, currency: 'eur'}, variants};
+            return {
+                type: 'shipping',
+                retailerId: this.retailerId,
+                shipping: {price: shippingPrice, currency: 'eur'},
+                variants
+            };
         }
     }
 

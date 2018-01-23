@@ -14,8 +14,6 @@ export default class emile {
         const {variants, bro} = this;
         this.page = await bro.newPage();
         try {
-
-
             await this.page.setRequestInterception(true);
             this.page.on('request', request => {
                 const intercepted = ['image', 'font'];
@@ -45,7 +43,7 @@ export default class emile {
                     const endOfArray = value + 1 === variants.length;
 
                     if (endOfArray && allUnavailable) {
-                        return {type: 'availability', retailerId: this.retailerId, value: 'all-unavailable'}
+                        return {type: 'all-unavailable', retailerId: this.retailerId, variants}
                     }
                 }
             }

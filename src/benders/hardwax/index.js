@@ -42,7 +42,7 @@ export default class Hardwax {
                 const endOfArray = value + 1 === variants.length;
 
                 if (endOfArray && allUnavailable) {
-                    return {type: 'availability', value: 'all-unavailable'}
+                    return {type: 'all-unavailable', retailerId: this.retailerId, variants}
                 }
             }
         }
