@@ -15,7 +15,7 @@ RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 COPY ./package.json ./
 RUN npm install
-RUN yarn add puppeteer@0.11.0
+RUN yarn add puppeteer
 COPY ./.build/ ./
 EXPOSE 8081
 CMD ["node", "index.js"]

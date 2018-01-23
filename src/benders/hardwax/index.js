@@ -40,7 +40,7 @@ export default class Hardwax {
             this.variants[value].available = itemIsAvailable;
 
             await this.page.click(`div.add_order.fright`);
-            logger.nfo('done click')
+            logger.nfo('done click');
             if (!itemIsAvailable) {
                 const allUnavailable = _.filter(variants, 'available').length === 0;
                 const endOfArray = value + 1 === variants.length;
