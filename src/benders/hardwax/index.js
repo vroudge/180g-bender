@@ -1,5 +1,7 @@
-import config from '../../config';
 import _ from 'lodash';
+
+import config from '../../config';
+import logger from '../../lib/logger'
 
 export default class Hardwax {
     constructor(browserInstance, {variants, destinationAddress, retailerId}) {
