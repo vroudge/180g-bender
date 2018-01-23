@@ -14,7 +14,7 @@ export default class emile {
         const {variants, bro} = this;
         this.page = await bro.newPage();
         try {
-            await this.page.setRequestInterception(true);
+            await this.page.setRequestInterceptionEnabled(true);
             this.page.on('request', request => {
                 const intercepted = ['image', 'font'];
 
