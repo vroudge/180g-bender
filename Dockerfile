@@ -1,13 +1,10 @@
-FROM node:alpine
+FROM node:9-alpine
 
-# Installs latest Chromium (63) package.
-RUN apk update && apk upgrade && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/community >> /etc/apk/repositories && \
-    echo @edge http://nl.alpinelinux.org/alpine/edge/main >> /etc/apk/repositories && \
-    apk add --no-cache \
-        udev \
-        ttf-freefont \
-        chromium
+RUN apk update && \
+    apk upgrade && \
+    apk add --update ca-certificates && \
+    apk add chromium --update-cache --repository http://nl.alpinelinux.org/alpine/edge/community \
+    rm -rf /var/cache/apk/*
 
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 # Puppeteer v0.11.0 works with Chromium 63.
