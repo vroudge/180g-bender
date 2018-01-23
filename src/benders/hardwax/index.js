@@ -12,7 +12,7 @@ export default class Hardwax {
 
     async start({checkout}) {
         const {variants, bro} = this;
-
+        logger.nfo('Begin hardwax', this.variants);
         this.page = await bro.newPage();
 
         await this.page.setRequestInterceptionEnabled(true);
@@ -25,6 +25,7 @@ export default class Hardwax {
                 request.continue();
             }
         });
+        logger.nfo('before loop');
 
         for (const [value, index] of variants.entries()) {
             await this.page.goto(index.shopId);
@@ -46,6 +47,7 @@ export default class Hardwax {
                 }
             }
         }
+        logger.nfo('after loop')
         await this.page.goto(`https://hardwax.com/basket/my-details/`);
         await this.fillShippingInfo();
         await this.page.click(`#submit`);
