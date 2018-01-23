@@ -47,7 +47,7 @@ export default (job, ctx, done) => ({
                 executablePath: '/usr/bin/chromium-browser',
                 args: ['--no-sandbox', '--disable-setuid-sandbox']
             });
-            logger.nfo('Browser takeoff', browser);
+            logger.nfo('Browser takeoff', !!browser);
             result = await Promise.all(
                 _.map(variants, async (elem, key) => {
                     return (await new Benders[key](browser, {
