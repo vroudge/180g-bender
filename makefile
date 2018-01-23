@@ -1,7 +1,7 @@
 dev:
 	NODE_ENV=development ./node_modules/.bin/babel-watch src/
 
-build:
+do-build:
 	./node_modules/.bin/babel src --out-dir .build --source-maps
 	cp ./package.json ./.build/package.json || true
 	cp ./makefile ./.build/makefile || true
@@ -13,7 +13,7 @@ build:
 
 deploy-prod:
 	@make build
-	docker build -t 180g/mailer .
+	docker build -t 180g/bender .
 	eval $(aws ecr get-login --region eu-west-1)
 	docker tag 180g/bender:latest 094204277459.dkr.ecr.eu-west-1.amazonaws.com/180g/bender:latest
 	docker push 094204277459.dkr.ecr.eu-west-1.amazonaws.com/180g/bender:latest

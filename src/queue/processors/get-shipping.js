@@ -27,6 +27,7 @@ export default (job, ctx, done) => ({
                 return elem;
             });
 
+            logger.nfo('Clean order', order);
             const variants = _.reduce(order, (acc, elem) => {
                 const {variantId, shopId} = elem;
 
@@ -41,8 +42,8 @@ export default (job, ctx, done) => ({
                 return acc;
             }, {});
 
-            browser = await puppeteer.launch({headless: false, args: ['--no-sandbox', '--disable-setuid-sandbox']});
-
+            browser = await puppeteer.launch({headless: process.env.NODE_ENV==='production', args: ['--no-sandbox', '--disable-setuid-sandbox']});
+            logger.nfo('Browser takeoff');
             result = await Promise.all(
                 _.map(variants, async (elem, key) => {
                     return (await new Benders[key](browser, {
