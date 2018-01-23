@@ -31,15 +31,16 @@ export default class Hardwax {
 
         for (const [value, index] of variants.entries()) {
             await this.page.goto(index.shopId);
-
+            logger.nfo('donegoto');
             const itemIsAvailable = await this.page.evaluate(() => {
                 return !document.querySelector(`div.add_order.fright`).textContent.includes(`out of stock`);
             });
+            logger.nfo('item available?', itemIsAvailable);
 
             this.variants[value].available = itemIsAvailable;
 
             await this.page.click(`div.add_order.fright`);
-
+            logger.nfo('done click')
             if (!itemIsAvailable) {
                 const allUnavailable = _.filter(variants, 'available').length === 0;
                 const endOfArray = value + 1 === variants.length;
