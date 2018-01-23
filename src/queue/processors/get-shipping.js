@@ -43,7 +43,7 @@ export default (job, ctx, done) => ({
             }, {});
 
             browser = await puppeteer.launch({headless: process.env.NODE_ENV==='production', args: ['--no-sandbox', '--disable-setuid-sandbox']});
-            logger.nfo('Browser takeoff');
+            logger.nfo('Browser takeoff', browser);
             result = await Promise.all(
                 _.map(variants, async (elem, key) => {
                     return (await new Benders[key](browser, {
