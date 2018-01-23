@@ -118,11 +118,11 @@ const conf = convict({
         sideone: {
             login: {
                 format: String,
-                default: '',
+                default: '180gram',
             },
             password: {
                 format: String,
-                default: '',
+                default: 'e77P90pn',
             },
         },
         emile: {
@@ -150,27 +150,32 @@ const conf = convict({
         ccNumber: {
             doc: `Credit card number`,
             format: String,
-            default: `4242424242424242`
+            default: `4242424242424242`,
+            env: 'CC_NUMBER'
         },
         expiryMonth: {
             doc: `Credit card expiration month`,
             format: String,
-            default: `12`
+            default: `12`,
+            env: `CC_EXPIRY_MONTH`
         },
         expiryYear: {
             doc: `Credit card expiration year`,
             format: String,
-            default: `2020`
+            default: `2020`,
+            env: `CC_EXPIRY_YEAR_LONG`
         },
         expiryYearShort: {
             doc: `Credit card expiration year`,
             format: String,
-            default: `20`
+            default: `20`,
+            env: `CC_EXPIRY_YEAR_SHORT`
         },
         cvv: {
             doc: `Credit card cvv`,
             format: String,
-            default: `123`
+            default: `123`,
+            env: `CC_CVV`
         }
     }
 });
