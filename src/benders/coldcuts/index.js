@@ -57,6 +57,7 @@ export default class emile {
             await this.fillShippingInfos();
             logger.nfo(`filled shipping`);
             await this.page.click(`form > div.step__footer > button`);
+            logger.nfo(`in shipping page`);
             await this.page.waitFor(3000);
             await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
 
