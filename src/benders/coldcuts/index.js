@@ -56,7 +56,7 @@ export default class emile {
             await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
             await this.fillShippingInfos();
             await this.page.click(`form > div.step__footer > button`);
-            await this.page.waitFor(2000);
+            await this.page.waitFor(3000);
             await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
 
             const shippingPriceRaw = await this.page.evaluate(() => {
