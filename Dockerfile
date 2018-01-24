@@ -6,6 +6,8 @@ RUN apk update && \
     apk add chromium --update-cache --repository http://nl.alpinelinux.org/alpine/edge/community \
     rm -rf /var/cache/apk/*
 
+RUN apk add --no-cache curl
+
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
 # Puppeteer v0.11.0 works with Chromium 63.
 
