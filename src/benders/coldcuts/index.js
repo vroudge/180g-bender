@@ -56,10 +56,10 @@ export default class emile {
             await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
             await this.fillShippingInfos();
             logger.nfo(`filled shipping`);
-            await this.page.screenshot({path: 'example.png'});
             await this.page.click(`form > div.step__footer > button`);
+            await this.page.screenshot({path: 'example.png'});
+
             logger.nfo(`in shipping page`);
-            await this.page.waitFor(3000);
 
             const shippingPriceRaw = await this.page.evaluate(() => {
                 return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
@@ -85,6 +85,7 @@ export default class emile {
 
     async fillShippingInfos() {
         await this.page.type(`#checkout_email`, config.gram.email);
+
         await this.page.type(`#checkout_shipping_address_first_name`, this.destinationAddress.first_name);
         await this.page.type(`#checkout_shipping_address_last_name`, this.destinationAddress.last_name);
         await this.page.type(`#checkout_shipping_address_address1`, this.destinationAddress.line1);
