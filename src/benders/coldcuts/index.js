@@ -85,7 +85,7 @@ export default class emile {
 
     async fillShippingInfos() {
         await this.page.type(`#checkout_email`, config.gram.email);
-
+        await this.page.select(`#checkout_shipping_address_country`, this.destinationAddress.country.toUpperCase())
         await this.page.type(`#checkout_shipping_address_first_name`, this.destinationAddress.first_name);
         await this.page.type(`#checkout_shipping_address_last_name`, this.destinationAddress.last_name);
         await this.page.type(`#checkout_shipping_address_address1`, this.destinationAddress.line1);
