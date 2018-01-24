@@ -35,14 +35,12 @@ export default class emile {
                 const itemIsAvailable = await this.page.evaluate(() => {
                     return document.querySelectorAll('#add-to-cart').length !== 0;
                 });
-                logger.nfo(`itemIsavailable ${itemIsAvailable}`)
                 this.variants[value].available = itemIsAvailable;
 
                 if (itemIsAvailable) {
                     await this.page.evaluate(() => {
                         document.querySelector(`#add-to-cart`).click();
                     });
-                    logger.nfo(`click ${index.shopId}`);
                     await this.page.waitFor(1000);
                 } else {
                     const allUnavailable = _.filter(variants, 'available').length === 0;
@@ -55,18 +53,15 @@ export default class emile {
             }
             await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
             await this.fillShippingInfos();
-            logger.nfo(`filled shipping`);
             await this.page.click(`form > div.step__footer > button`);
 
-            logger.nfo(`in shipping page`);
             await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
             const shippingPriceRaw = await this.page.evaluate(() => {
                 return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
             });
             await this.page.screenshot({path: 'example.png'});
-            logger.nfo(`shipping price raw`, {shippingPriceRaw});
             const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
-            logger.nfo(`shipping price`, {shippingPrice});
+            logger.nfo('Bender - Coldcuts - End of shared flow');
             if (checkout) {
 
             } else {
