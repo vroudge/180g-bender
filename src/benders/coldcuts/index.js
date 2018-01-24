@@ -56,6 +56,7 @@ export default class emile {
             await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
             await this.fillShippingInfos();
             logger.nfo(`filled shipping`);
+            await this.page.screenshot({path: 'example.png'});
             await this.page.click(`form > div.step__footer > button`);
             logger.nfo(`in shipping page`);
             await this.page.waitFor(3000);
