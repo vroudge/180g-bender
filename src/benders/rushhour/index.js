@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 import config from '../../config';
+import logger from "../../lib/logger";
 
 export default class Rushhour {
     constructor(browserInstance, {variants, retailerId, destinationAddress}) {
@@ -68,10 +69,10 @@ export default class Rushhour {
             document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
         });
 
+        logger.nfo('Bender - Rushhour - End of shared flow');
+
         if (checkout) {
-            console.log('enter checkout');
             await this.page.waitForSelector(`input.bttn`);
-            console.log('done waiting selector');
             await this.page.waitFor(1000);
             await this.page.evaluate(() => {
                 document.querySelectorAll(`input.bttn`)[0].click()
@@ -99,7 +100,6 @@ export default class Rushhour {
             document.querySelector('input[type="password"]').value = password;
         }, config.accounts.rushhour.password);
         await this.page.click('#main-content > form > table > tbody > tr:nth-child(4) > td > input');
-        console.log('done login rushhour');
     }
 
     async fillShippingInfo() {
@@ -115,7 +115,6 @@ export default class Rushhour {
         await this.fillField(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(14) > td:nth-child(2) > input`,
             this.destinationAddress.zip);
         await this.page.select('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(17) > td:nth-child(2) > select', `75`);
-        console.log('done fill shipping rushhour');
     }
 
     async fillCreditCardInfo() {

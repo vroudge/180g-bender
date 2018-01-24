@@ -59,7 +59,6 @@ export default class emile {
             const shippingPriceRaw = await this.page.evaluate(() => {
                 return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
             });
-            await this.page.screenshot({path: 'example.png'});
             const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
             logger.nfo('Bender - Coldcuts - End of shared flow');
             if (checkout) {

@@ -62,7 +62,8 @@ export default class Hardwax {
             const selIndex = listbox.selectedIndex;
             return listbox.options[selIndex].text.split('€ ')[1];
         });
-        logger.nfo('hardwax shipping calculated', shippingPrice);
+
+        logger.nfo('Bender - Hardwax - End of shared flow');
 
         if (checkout) {
             await Hardwax.fillPaymentInfo(frame);
