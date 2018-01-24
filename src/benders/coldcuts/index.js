@@ -27,17 +27,21 @@ export default class emile {
 
             for (const [value, index] of variants.entries()) {
                 await this.page.goto(index.shopId);
+                logger.nfo(`hit ${index.shopId}`);
+
                 await this.page.waitFor(1500);
 
                 const itemIsAvailable = await this.page.evaluate(() => {
                     return document.querySelectorAll('#add-to-cart').length !== 0;
                 });
+                logger.nfo(`itemIsavailable ${itemIsAvailable}`)
                 this.variants[value].available = itemIsAvailable;
 
                 if (itemIsAvailable) {
                     await this.page.evaluate(() => {
                         document.querySelector(`#add-to-cart`).click();
                     });
+                    logger.nfo(`click ${index.shopId}`);
                     await this.page.waitFor(1000);
                 } else {
                     const allUnavailable = _.filter(variants, 'available').length === 0;

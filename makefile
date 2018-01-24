@@ -14,7 +14,7 @@ build:
 deploy-prod:
 	@make build
 	docker build -t 180g/bender .
-	eval $(aws ecr get-login --region eu-west-1)
+	eval $(aws ecr get-login --region eu-west-1 --no-include-email)
 	docker tag 180g/bender:latest 094204277459.dkr.ecr.eu-west-1.amazonaws.com/180g/bender:latest
 	docker push 094204277459.dkr.ecr.eu-west-1.amazonaws.com/180g/bender:latest
 	kubectl --context k8s.180-g.com patch deployment bender -p "{\"spec\":{\"template\":{\"metadata\":{\"labels\":{\"date\":\"`date +'%s'`\"}}}}}" --namespace api
