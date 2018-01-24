@@ -42,11 +42,19 @@ export default (job, ctx, done) => ({
                 return acc;
             }, {});
 
-            browser = await puppeteer.launch({
-                headless: process.env.NODE_ENV === 'production',
-                executablePath: '/usr/bin/chromium-browser',
-                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
-            });
+            if(process.env.NODE_ENV === 'production'){
+                browser = await puppeteer.launch({
+                    headless: true,
+                    executablePath: '/usr/bin/chromium-browser',
+                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+                });
+            }else{
+                browser = await puppeteer.launch({
+                    headless: false,
+                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+                });
+            }
+
             logger.nfo('Browser takeoff', !!browser);
             result = await Promise.all(
                 _.map(variants, async (elem, key) => {

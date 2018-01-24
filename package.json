@@ -12,7 +12,7 @@
     "convict": "^4.0.0",
     "kue": "^0.11.6",
     "lodash": "^4.17.4",
-    "puppeteer": "^0.13.0",
+    "puppeteer": "0.12.0",
     "winston": "^2.3.1",
     "winston-logmatic": "^0.2.0"
   },

@@ -14,7 +14,7 @@ export default class Hardwax {
 
     async start({checkout}) {
         const {variants, bro} = this;
-        logger.nfo('Begin hardwax', this.variants);
+        logger.nfo('Begin hardwax bender', this.variants);
         this.page = await bro.newPage();
 
         await this.page.setRequestInterceptionEnabled(true);
@@ -27,20 +27,16 @@ export default class Hardwax {
                 request.continue();
             }
         });
-        logger.nfo('before loop');
 
         for (const [value, index] of variants.entries()) {
             await this.page.goto(index.shopId);
-            logger.nfo('donegoto');
             const itemIsAvailable = await this.page.evaluate(() => {
                 return !document.querySelector(`div.add_order.fright`).textContent.includes(`out of stock`);
             });
-            logger.nfo('item available?', itemIsAvailable);
 
             this.variants[value].available = itemIsAvailable;
 
             await this.page.click(`div.add_order.fright`);
-            logger.nfo('done click');
             if (!itemIsAvailable) {
                 const allUnavailable = _.filter(variants, 'available').length === 0;
                 const endOfArray = value + 1 === variants.length;
@@ -50,7 +46,6 @@ export default class Hardwax {
                 }
             }
         }
-        logger.nfo('after loop')
         await this.page.goto(`https://hardwax.com/basket/my-details/`);
         await this.fillShippingInfo();
         await this.page.click(`#submit`);
@@ -67,6 +62,7 @@ export default class Hardwax {
             const selIndex = listbox.selectedIndex;
             return listbox.options[selIndex].text.split('€ ')[1];
         });
+        logger.nfo('hardwax shipping calculated', shippingPrice);
 
         if (checkout) {
             await Hardwax.fillPaymentInfo(frame);

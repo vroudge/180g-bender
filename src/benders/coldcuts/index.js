@@ -26,7 +26,8 @@ export default class emile {
             });
 
             for (const [value, index] of variants.entries()) {
-                await this.page.goto(index.shopId, {waitUntil: 'networkidle0'});
+                await this.page.goto(index.shopId);
+                await this.page.waitFor(1500);
 
                 const itemIsAvailable = await this.page.evaluate(() => {
                     return document.querySelectorAll('#add-to-cart').length !== 0;
