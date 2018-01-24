@@ -57,12 +57,15 @@ export default class emile {
             await this.fillShippingInfos();
             await this.page.click(`form > div.step__footer > button`);
             await this.page.waitFor(2000);
+            await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
 
-            const shippingPrice = await this.page.evaluate(() => {
+            const shippingPriceRaw = await this.page.evaluate(() => {
                 const nodes = Array.prototype.slice.call(document.querySelectorAll('label > span.radio__label__accessory > span'));
                 return nodes.map(elem => elem.textContent);
             });
-            logger.nfo(`shipping price raw`, {shippingPrice});
+            logger.nfo(`shipping price raw`, {shippingPriceRaw});
+            const shippingPrice = shippingPriceRaw[1].replace(/\s/g, '').replace(`£`,``);
+            logger.nfo(`shipping price`, {shippingPrice});
             if (checkout) {
 
             } else {
