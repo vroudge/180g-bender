@@ -60,10 +60,9 @@ export default class emile {
 
             const shippingPrice = await this.page.evaluate(() => {
                 const nodes = Array.prototype.slice.call(document.querySelectorAll('label > span.radio__label__accessory > span'));
-                const rightPrice = nodes.map(elem => elem.textContent.replace(/\s/g, ''))[1];
-                return rightPrice.replace('£', '');
+                return nodes.map(elem => elem.textContent);
             });
-
+            logger.nfo(`shipping price raw`, {shippingPrice});
             if (checkout) {
 
             } else {
