@@ -57,15 +57,15 @@ export default class emile {
             await this.fillShippingInfos();
             logger.nfo(`filled shipping`);
             await this.page.click(`form > div.step__footer > button`);
-            await this.page.screenshot({path: 'example.png'});
 
             logger.nfo(`in shipping page`);
-
+            await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
             const shippingPriceRaw = await this.page.evaluate(() => {
                 return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
             });
+            await this.page.screenshot({path: 'example.png'});
             logger.nfo(`shipping price raw`, {shippingPriceRaw});
-            const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`,``);
+            const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
             logger.nfo(`shipping price`, {shippingPrice});
             if (checkout) {
 
@@ -85,7 +85,10 @@ export default class emile {
 
     async fillShippingInfos() {
         await this.page.type(`#checkout_email`, config.gram.email);
-        await this.page.select(`#checkout_shipping_address_country`, this.destinationAddress.country.toUpperCase())
+        await this.page.evaluate((country) => {
+            document.querySelector(`#checkout_shipping_address_country > option[data-code="DE"]`).selected = true;
+            document.querySelector('#checkout_shipping_address_country').dispatchEvent(new Event('change', {'bubbles': true}));
+        }, this.destinationAddress.country);
         await this.page.type(`#checkout_shipping_address_first_name`, this.destinationAddress.first_name);
         await this.page.type(`#checkout_shipping_address_last_name`, this.destinationAddress.last_name);
         await this.page.type(`#checkout_shipping_address_address1`, this.destinationAddress.line1);
