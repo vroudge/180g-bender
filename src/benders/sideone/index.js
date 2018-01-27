@@ -1,4 +1,5 @@
 import config from '../../config';
+import logger from '../../lib/logger';
 import _ from 'lodash';
 
 export default class sideone {
