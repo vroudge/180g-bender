@@ -52,9 +52,11 @@ export default class Juno {
         }
 
         await this.page.goto('https://www.juno.co.uk/cart/');
-        logger.nfo('Juno in cart')
+        logger.nfo('Juno in cart');
+        await this.page.waitFor(10000);
+        await page.screenshot({path: 'example.png', fullPage: true});
         await this.page.waitForSelector(`select.delivery_country`);
-        logger.nfo('Juno wait for delivery country select')
+        logger.nfo('Juno wait for delivery country select');
         await this.page.select('select.delivery_country', junoCountryCodes[this.destinationAddress.country]);
         logger.nfo('Juno done select country');
         await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
