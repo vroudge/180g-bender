@@ -41,6 +41,7 @@ export default class Juno {
 
             if (itemIsAvailable) {
                 await this.page.click('.btn.btn-cta.mb-2.ml-2');
+                await this.page.waitFor(1500);
             } else {
                 const allUnavailable = _.filter(variants, 'available').length === 0;
                 const endOfArray = value + 1 === variants.length;
