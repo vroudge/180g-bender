@@ -42,11 +42,12 @@ export default class sideone {
 
             logger.nfo('done add to cart')
 
-
-            await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
-            logger.nfo('donegoto basket');
-            await this.page.waitFor(5000);
             await this.page.screenshot({path: 'example.png', fullPage: true});
+            await this.page.waitFor(5000);
+            await this.page.screenshot({path: 'example0.png', fullPage: true});
+            await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
+            await this.page.screenshot({path: 'example1.png', fullPage: true});
+            logger.nfo('donegoto basket');
             await this.page.waitForSelector(`#basket_go_next`);
             logger.nfo('done wait basket gonext')
             await this.page.click(`#basket_go_next`);
