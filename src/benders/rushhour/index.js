@@ -128,6 +128,7 @@ export default class Rushhour {
     }
 
     async fillField(selector, value) {
+        await this.page.waitFor(selector);
         await this.page.$eval(selector, input => input.value = '');
         await this.page.type(selector, value);
     }
