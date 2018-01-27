@@ -20,19 +20,15 @@ export default class sideone {
             for (const [value, index] of variants.entries()) {
 
                 await this.page.goto(index.shopId);
-                logger.nfo('done goto one')
                 const itemIsAvailable = await this.page.evaluate(() => {
                     return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
                 });
-                logger.nfo('done available')
                 this.variants[value].available = itemIsAvailable;
                 if (!itemIsAvailable) {
                     const allUnavailable = _.filter(variants, 'available').length === 0;
 
                     const endOfArray = value + 1 === variants.length;
                     if (endOfArray && allUnavailable) {
-
-                        console.log('allunav');
                         return {type: 'all-unavailable', retailerId: this.retailerId, variants};
                     }
                 } else {
@@ -40,28 +36,19 @@ export default class sideone {
                 }
             }
 
-            logger.nfo('done add to cart')
-
             await this.page.waitFor(5000);
             await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
-            logger.nfo('donegoto basket');
             await this.page.waitForSelector(`#basket_go_next`);
-            logger.nfo('done wait basket gonext')
             await this.page.click(`#basket_go_next`);
-            logger.nfo('done click basket gonext')
             await this.page.waitForSelector(`#signin-form_box_left > div > a.btn.signin-form_once`);
             await this.page.click(`#signin-form_box_left > div > a.btn.signin-form_once`);
-            logger.nfo('done click signin once')
             await this.page.waitForSelector(`#deliver_to_billingaddr`);
             await this.page.click(`#deliver_to_billingaddr`);
-            logger.nfo('done click deliver to billin address')
             await this.fillShippingInfo();
-            logger.nfo('done fill shippinginfo')
             await this.page.waitFor(5000);
             await this.page.screenshot({path: 'example.png', fullPage: true});
             await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
             await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-            logger.nfo('done fill shippinginfo')
             await this.page.waitFor(1500);
             const shippingPrice = await this.page.evaluate(() => {
                 return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
@@ -79,9 +66,6 @@ export default class sideone {
                     variants
                 };
             }
-        } catch (e) {
-            logger.err('error in sideone', {error: e, stack: e.stack})
-        }
     }
 
     async removeOneElementFromBasket() {
@@ -95,7 +79,6 @@ export default class sideone {
         const elementCountInBasket = await this.page.evaluate(() => {
             return document.querySelectorAll(`.productslist_product_action > a`).length
         });
-        console.log('element', elementCountInBasket);
 
         //basket is not empty, we must clear it
         if (elementCountInBasket) {
@@ -149,7 +132,6 @@ export default class sideone {
         await this.page.evaluate(() => {
             return ClNew.ramka();
         });
-        logger.nfo('done whole flow of filling')
         await this.page.click(`#submit_noregister`);
     }
 }
