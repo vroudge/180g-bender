@@ -30,16 +30,18 @@ export default class emile {
         for (const [value, index] of variants.entries()) {
             await this.page.goto(index.shopId);
             await this.page.waitFor(1500);
-
+            logger.nfo('coldcuts done goto');
             const itemIsAvailable = await this.page.evaluate(() => {
                 return document.querySelectorAll('#add-to-cart').length !== 0;
             });
+            logger.nfo('coldcuts item available');
             this.variants[value].available = itemIsAvailable;
 
             if (itemIsAvailable) {
                 await this.page.evaluate(() => {
                     document.querySelector(`#add-to-cart`).click();
                 });
+                logger.nfo('coldcuts item added to cart');
                 await this.page.waitFor(1000);
             } else {
                 const allUnavailable = _.filter(variants, 'available').length === 0;
@@ -51,13 +53,17 @@ export default class emile {
             }
         }
         await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
+        logger.nfo('coldcuts gotocheckout');
         await this.fillShippingInfos();
+        logger.nfo('coldcuts done filling');
         await this.page.click(`form > div.step__footer > button`);
-
+        logger.nfo('coldcuts done clicking next');
         await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
+        logger.nfo('coldcuts done wait selector');
         const shippingPriceRaw = await this.page.evaluate(() => {
             return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
         });
+        logger.nfo('coldcuts done shipping price');
         const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
 
         logger.nfo('End coldcuts bender', this.variants);
