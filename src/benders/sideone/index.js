@@ -14,6 +14,7 @@ export default class sideone {
         const {variants, bro} = this;
 
         this.page = await bro.newPage();
+        logger.nfo('Start Sideone bender', this.variants);
         for (const [value, index] of variants.entries()) {
 
             await this.page.goto(index.shopId);
@@ -53,6 +54,8 @@ export default class sideone {
         const shippingPrice = await this.page.evaluate(() => {
             return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
         });
+
+        logger.nfo('End Sideone bender', this.variants);
 
         if (checkout) {
             return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
