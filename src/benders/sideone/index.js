@@ -146,7 +146,7 @@ export default class sideone {
         await this.page.evaluate(() => {
             return ClNew.hideDialogMail();
         });
-
+        logger.nfo('done whole flow of filling')
         await this.page.waitFor(2000);
         await this.page.click(`#submit_noregister`);
     }
