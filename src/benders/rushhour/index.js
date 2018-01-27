@@ -29,7 +29,7 @@ export default class Rushhour {
         });
 
         await this.login();
-
+        logger.nfo('Begin Rushhour Bender', this.variants);
         for (const [value, index] of variants.entries()) {
             const id = index.shopId.split('item=')[1];
             const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
@@ -53,6 +53,8 @@ export default class Rushhour {
 
         await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
         await this.fillShippingInfo();
+        await this.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
+
         await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
         await this.page.waitForSelector(`#shipment > select`);
 
@@ -69,7 +71,7 @@ export default class Rushhour {
             document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
         });
 
-        logger.nfo('Bender - Rushhour - End of shared flow');
+        logger.nfo('Rushhour - End of shared flow');
 
         if (checkout) {
             await this.page.waitForSelector(`input.bttn`);

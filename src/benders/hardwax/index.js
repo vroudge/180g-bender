@@ -63,7 +63,7 @@ export default class Hardwax {
             return listbox.options[selIndex].text.split('€ ')[1];
         });
 
-        logger.nfo('Bender - Hardwax - End of shared flow');
+        logger.nfo('Hardwax - End of shared flow');
 
         if (checkout) {
             await Hardwax.fillPaymentInfo(frame);

@@ -17,10 +17,10 @@ const destinationAddress = {
 (async () => {
     try {
         const queue = await getOrCreateQueue();
-        queue && logger.log('Bender - Queue created');
+        queue && logger.log('Queue created');
 
         const queueWithProcessors = await attachQueueProcessors(queue);
-        queueWithProcessors && logger.log('Bender - Processors attached. Ready!');
+        queueWithProcessors && logger.log('Processors attached. Ready!');
     } catch (e) {
         logger.err('error in bender main', e);
     }

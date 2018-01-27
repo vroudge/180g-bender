@@ -27,7 +27,7 @@ export default class Juno {
                 request.continue();
             }
         });
-
+        logger.nfo('Begin juno bender', this.variants);
         for (const [value, index] of variants.entries()) {
             await this.page.goto(index.shopId);
 
@@ -57,7 +57,7 @@ export default class Juno {
         const shippingPrice = await this.page.evaluate(() => {
             return document.querySelectorAll(`#shipping_val`)[0].textContent.replace('€', '');
         });
-
+        logger.nfo('End juno bender', this.variants);
         if (checkout) {
             await this.login();
             await this.fillShippingInfo();

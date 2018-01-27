@@ -60,7 +60,7 @@ export default class emile {
                 return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
             });
             const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
-            logger.nfo('Bender - Coldcuts - End of shared flow');
+            logger.nfo('Coldcuts - End of shared flow');
             if (checkout) {
 
             } else {
