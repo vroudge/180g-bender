@@ -44,6 +44,9 @@ export default class sideone {
 
 
             await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
+            logger.nfo('donegoto basket');
+            await this.page.waitFor(5000);
+            await this.page.screenshot({path: 'example.png', fullPage: true});
             await this.page.waitForSelector(`#basket_go_next`);
             logger.nfo('done wait basket gonext')
             await this.page.click(`#basket_go_next`);
