@@ -13,59 +13,57 @@ export default class sideone {
 
     async start({checkout}) {
         const {variants, bro} = this;
-        try {
+        this.page = await bro.newPage();
+        logger.nfo('Begin Sideone bender', this.variants);
+        for (const [value, index] of variants.entries()) {
 
-            this.page = await bro.newPage();
-            logger.nfo('Begin Sideone bender', this.variants);
-            for (const [value, index] of variants.entries()) {
-
-                await this.page.goto(index.shopId);
-                const itemIsAvailable = await this.page.evaluate(() => {
-                    return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
-                });
-                this.variants[value].available = itemIsAvailable;
-                if (!itemIsAvailable) {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-
-                    const endOfArray = value + 1 === variants.length;
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'all-unavailable', retailerId: this.retailerId, variants};
-                    }
-                } else {
-                    await this.page.click(`#projector_button_basket`);
-                }
-            }
-
-            await this.page.waitFor(5000);
-            await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
-            await this.page.waitForSelector(`#basket_go_next`);
-            await this.page.click(`#basket_go_next`);
-            await this.page.waitForSelector(`#signin-form_box_left > div > a.btn.signin-form_once`);
-            await this.page.click(`#signin-form_box_left > div > a.btn.signin-form_once`);
-            await this.page.waitForSelector(`#deliver_to_billingaddr`);
-            await this.page.click(`#deliver_to_billingaddr`);
-            await this.fillShippingInfo();
-            await this.page.waitFor(5000);
-            await this.page.screenshot({path: 'example.png', fullPage: true});
-            await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-            await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-            await this.page.waitFor(1500);
-            const shippingPrice = await this.page.evaluate(() => {
-                return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
+            await this.page.goto(index.shopId);
+            const itemIsAvailable = await this.page.evaluate(() => {
+                return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
             });
+            this.variants[value].available = itemIsAvailable;
+            if (!itemIsAvailable) {
+                const allUnavailable = _.filter(variants, 'available').length === 0;
 
-            logger.nfo('End Sideone bender', this.variants);
-
-            if (checkout) {
-                return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
+                const endOfArray = value + 1 === variants.length;
+                if (endOfArray && allUnavailable) {
+                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+                }
             } else {
-                return {
-                    type: 'shipping',
-                    retailerId: this.retailerId,
-                    shipping: {price: shippingPrice, currency: 'pln'},
-                    variants
-                };
+                await this.page.click(`#projector_button_basket`);
             }
+        }
+
+        await this.page.waitFor(5000);
+        await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
+        await this.page.waitForSelector(`#basket_go_next`);
+        await this.page.click(`#basket_go_next`);
+        await this.page.waitForSelector(`#signin-form_box_left > div > a.btn.signin-form_once`);
+        await this.page.click(`#signin-form_box_left > div > a.btn.signin-form_once`);
+        await this.page.waitForSelector(`#deliver_to_billingaddr`);
+        await this.page.click(`#deliver_to_billingaddr`);
+        await this.fillShippingInfo();
+        await this.page.waitFor(5000);
+        await this.page.screenshot({path: 'example.png', fullPage: true});
+        await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
+        await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
+        await this.page.waitFor(1500);
+        const shippingPrice = await this.page.evaluate(() => {
+            return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
+        });
+
+        logger.nfo('End Sideone bender', this.variants);
+
+        if (checkout) {
+            return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
+        } else {
+            return {
+                type: 'shipping',
+                retailerId: this.retailerId,
+                shipping: {price: shippingPrice, currency: 'pln'},
+                variants
+            };
+        }
     }
 
     async removeOneElementFromBasket() {
