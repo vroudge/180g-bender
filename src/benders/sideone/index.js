@@ -13,79 +13,90 @@ export default class sideone {
 
     async start({checkout}) {
         const {variants, bro} = this;
+        try {
 
-        this.page = await bro.newPage();
-        logger.nfo('Start Sideone bender', this.variants);
-        for (const [value, index] of variants.entries()) {
+            this.page = await bro.newPage();
+            logger.nfo('Begin Sideone bender', this.variants);
+            for (const [value, index] of variants.entries()) {
 
-            await this.page.goto(index.shopId);
+                await this.page.goto(index.shopId);
+                logger.nfo('done goto one')
+                const itemIsAvailable = await this.page.evaluate(() => {
+                    return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
+                });
+                logger.nfo('done available')
+                this.variants[value].available = itemIsAvailable;
+                if (!itemIsAvailable) {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
 
-            const itemIsAvailable = await this.page.evaluate(() => {
-                return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
+                    const endOfArray = value + 1 === variants.length;
+                    if (endOfArray && allUnavailable) {
+
+                        console.log('allunav');
+                        return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+                    }
+                } else {
+                    await this.page.click(`#projector_button_basket`);
+                }
+            }
+
+            logger.nfo('done add to cart')
+
+
+            await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
+            await this.page.waitForSelector(`#basket_go_next`);
+            logger.nfo('done wait basket gonext')
+            await this.page.click(`#basket_go_next`);
+            logger.nfo('done click basket gonext')
+            await this.page.waitForSelector(`#signin-form_box_left > div > a.btn.signin-form_once`);
+            await this.page.click(`#signin-form_box_left > div > a.btn.signin-form_once`);
+            logger.nfo('done click signin once')
+            await this.page.waitForSelector(`#deliver_to_billingaddr`);
+            await this.page.click(`#deliver_to_billingaddr`);
+            logger.nfo('done click deliver to billin address')
+            await this.fillShippingInfo();
+            logger.nfo('done fill shippinginfo')
+            await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
+            await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
+            logger.nfo('done fill shippinginfo')
+            await this.page.waitFor(1500);
+            const shippingPrice = await this.page.evaluate(() => {
+                return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
             });
 
-            this.variants[value].available = itemIsAvailable;
-            if (!itemIsAvailable) {
-                const allUnavailable = _.filter(variants, 'available').length === 0;
+            logger.nfo('End Sideone bender', this.variants);
 
-                const endOfArray = value + 1 === variants.length;
-                if (endOfArray && allUnavailable) {
-
-                    console.log('allunav');
-                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
-                }
+            if (checkout) {
+                return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
             } else {
-                await this.page.click(`#projector_button_basket`);
+                return {
+                    type: 'shipping',
+                    retailerId: this.retailerId,
+                    shipping: {price: shippingPrice, currency: 'pln'},
+                    variants
+                };
             }
-        }
-
-
-        await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
-        await this.page.waitForSelector(`#basket_go_next`);
-        await this.page.click(`#basket_go_next`);
-        await this.page.waitForSelector(`#signin-form_box_left > div > a.btn.signin-form_once`);
-        await this.page.click(`#signin-form_box_left > div > a.btn.signin-form_once`);
-        await this.page.waitForSelector(`#deliver_to_billingaddr`);
-        await this.page.click(`#deliver_to_billingaddr`);
-        await this.fillShippingInfo();
-        await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-        await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-
-        await this.page.waitFor(1500);
-        const shippingPrice = await this.page.evaluate(() => {
-            return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
-        });
-
-        logger.nfo('End Sideone bender', this.variants);
-
-        if (checkout) {
-            return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
-        } else {
-            return {
-                type: 'shipping',
-                retailerId: this.retailerId,
-                shipping: {price: shippingPrice, currency: 'pln'},
-                variants
-            };
+        } catch (e) {
+            logger.err('error in sideone', {error: e, stack: e.stack})
         }
     }
 
-    async removeOneElementFromBasket(){
-        await this.page.evaluate(()=>{
+    async removeOneElementFromBasket() {
+        await this.page.evaluate(() => {
             document.querySelector(`.productslist_product_action > a`).click()
         })
     }
 
-    async emptyBasket(){
+    async emptyBasket() {
         await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
-        const elementCountInBasket = await this.page.evaluate(()=>{
+        const elementCountInBasket = await this.page.evaluate(() => {
             return document.querySelectorAll(`.productslist_product_action > a`).length
         });
         console.log('element', elementCountInBasket);
 
         //basket is not empty, we must clear it
-        if(elementCountInBasket){
-            for (const basketElement of _.range(elementCountInBasket)){
+        if (elementCountInBasket) {
+            for (const basketElement of _.range(elementCountInBasket)) {
                 console.log('remove one');
 
                 await this.removeOneElementFromBasket();
@@ -101,7 +112,7 @@ export default class sideone {
         await this.page.type(`#signin_login_input`, `180gram`);
         await this.page.type(`#signin_pass_input`, `e77P90pn`);
         await this.page.waitForSelector(`button.btn.signin_button`);
-        await this.page.evaluate(()=>{
+        await this.page.evaluate(() => {
             return document.querySelector(`button.btn.signin_button`).click()
         });
     }
