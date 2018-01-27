@@ -14,69 +14,66 @@ export default class emile {
     async start({checkout}) {
         const {variants, bro} = this;
         this.page = await bro.newPage();
-        try {
+        await this.page.setRequestInterceptionEnabled(true);
+        this.page.on('request', request => {
+            const intercepted = ['image', 'font'];
 
+            if (intercepted.includes(request.resourceType)) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        });
 
-            await this.page.setRequestInterceptionEnabled(true);
-            this.page.on('request', request => {
-                const intercepted = ['image', 'font'];
+        logger.nfo('Begin Emile bender', this.variants);
 
-                if (intercepted.includes(request.resourceType)) {
-                    request.abort();
-                } else {
-                    request.continue();
-                }
+        for (const [value, index] of variants.entries()) {
+            await this.page.goto(index.shopId);
+            await this.page.waitForSelector(`a.btn.btn-default.button.addToBasket`);
+
+            const itemIsAvailable = await this.page.evaluate(() => {
+                return !document.querySelector('a.addToBasket').textContent.includes(`Out of stock`);
             });
 
-            for (const [value, index] of variants.entries()) {
-                await this.page.goto(index.shopId);
-                await this.page.waitForSelector(`a.btn.btn-default.button.addToBasket`);
+            this.variants[value].available = itemIsAvailable;
 
-                const itemIsAvailable = await this.page.evaluate(() => {
-                    return !document.querySelector('a.addToBasket').textContent.includes(`Out of stock`);
-                });
+            if (itemIsAvailable) {
+                await this.page.click(`a.btn.btn-default.button.addToBasket`);
+                await this.page.waitFor(1000);
 
-                this.variants[value].available = itemIsAvailable;
+            } else {
+                const allUnavailable = _.filter(variants, 'available').length === 0;
+                const endOfArray = value + 1 === variants.length;
 
-                if (itemIsAvailable) {
-                    await this.page.click(`a.btn.btn-default.button.addToBasket`);
-                    await this.page.waitFor(1000);
-
-                } else {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
-
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'all-unavailable', retailerId: this.retailerId, variants}
-                    }
+                if (endOfArray && allUnavailable) {
+                    return {type: 'all-unavailable', retailerId: this.retailerId, variants}
                 }
             }
+        }
 
-            await this.page.goto(`https://chezemile-records.com/home`);
-            await this.page.waitFor(4000);
-            await this.page.select(`select.countrySelect`, emileCountryCodes[this.destinationAddress.country]);
+        await this.page.goto(`https://chezemile-records.com/home`);
+        await this.page.waitFor(4000);
+        await this.page.select(`select.countrySelect`, emileCountryCodes[this.destinationAddress.country]);
 
-            await this.fillShippingInfos();
+        await this.fillShippingInfos();
 
-            if (checkout) {
-                await this.fillPaymentInfo();
-                return {type: 'checkout', value: 'success'};
-            } else {
-                const shippingPrice = await this.page.evaluate(() => {
-                    return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`)
-                        .textContent.replace('€', '');
-                });
+        logger.nfo('End Emile bender', this.variants);
 
-                return {
-                    type: 'shipping',
-                    retailerId: this.retailerId,
-                    shipping: {price: shippingPrice, currency: 'eur'},
-                    variants
-                };
-            }
-        } catch (e) {
-            console.error(e);
+        if (checkout) {
+            await this.fillPaymentInfo();
+            return {type: 'checkout', value: 'success'};
+        } else {
+            const shippingPrice = await this.page.evaluate(() => {
+                return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`)
+                    .textContent.replace('€', '');
+            });
 
+            return {
+                type: 'shipping',
+                retailerId: this.retailerId,
+                shipping: {price: shippingPrice, currency: 'eur'},
+                variants
+            };
         }
     }
 
