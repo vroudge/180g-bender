@@ -13,8 +13,6 @@ export default class emile {
 
     async start({checkout}) {
         try {
-
-
             const {variants, bro} = this;
             this.page = await bro.newPage();
             await this.page.setRequestInterceptionEnabled(true);
@@ -89,7 +87,7 @@ export default class emile {
     async fillShippingInfos() {
         await this.page.type(`#checkout_email`, config.gram.email);
         await this.page.evaluate((country) => {
-            document.querySelector(`#checkout_shipping_address_country > option[data-code="${this.destinationAddress.country.toUpperCase()}"]`).selected = true;
+            document.querySelector(`#checkout_shipping_address_country > option[data-code="${country.toUpperCase()}"]`).selected = true;
             document.querySelector('#checkout_shipping_address_country').dispatchEvent(new Event('change', {'bubbles': true}));
         }, this.destinationAddress.country);
         await this.page.type(`#checkout_shipping_address_first_name`, this.destinationAddress.first_name);
