@@ -1,5 +1,7 @@
 import config from '../../config';
+import logger from '../../lib/logger';
 import _ from 'lodash';
+
 import emileCountryCodes from './countryCodesMap';
 
 export default class emile {
