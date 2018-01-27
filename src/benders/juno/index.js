@@ -54,7 +54,7 @@ export default class Juno {
         await this.page.goto('https://www.juno.co.uk/cart/');
         logger.nfo('Juno in cart');
         await this.page.waitFor(10000);
-        await page.screenshot({path: 'example.png', fullPage: true});
+        await this.page.screenshot({path: 'example.png', fullPage: true});
         await this.page.waitForSelector(`select.delivery_country`);
         logger.nfo('Juno wait for delivery country select');
         await this.page.select('select.delivery_country', junoCountryCodes[this.destinationAddress.country]);
