@@ -14,66 +14,63 @@ export default class emile {
     async start({checkout}) {
         const {variants, bro} = this;
         this.page = await bro.newPage();
-        try {
-            await this.page.setRequestInterceptionEnabled(true);
-            this.page.on('request', request => {
-                const intercepted = ['image', 'font'];
+        await this.page.setRequestInterceptionEnabled(true);
+        this.page.on('request', request => {
+            const intercepted = ['image', 'font'];
 
-                if (intercepted.includes(request.resourceType)) {
-                    request.abort();
-                } else {
-                    request.continue();
-                }
-            });
-
-            for (const [value, index] of variants.entries()) {
-                await this.page.goto(index.shopId);
-                logger.nfo(`hit ${index.shopId}`);
-
-                await this.page.waitFor(1500);
-
-                const itemIsAvailable = await this.page.evaluate(() => {
-                    return document.querySelectorAll('#add-to-cart').length !== 0;
-                });
-                this.variants[value].available = itemIsAvailable;
-
-                if (itemIsAvailable) {
-                    await this.page.evaluate(() => {
-                        document.querySelector(`#add-to-cart`).click();
-                    });
-                    await this.page.waitFor(1000);
-                } else {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
-
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'all-unavailable', retailerId: this.retailerId, variants}
-                    }
-                }
-            }
-            await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
-            await this.fillShippingInfos();
-            await this.page.click(`form > div.step__footer > button`);
-
-            await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
-            const shippingPriceRaw = await this.page.evaluate(() => {
-                return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
-            });
-            const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
-            logger.nfo('Coldcuts - End of shared flow');
-            if (checkout) {
-
+            if (intercepted.includes(request.resourceType)) {
+                request.abort();
             } else {
-                return {
-                    type: 'shipping',
-                    retailerId: this.retailerId,
-                    shipping: {price: parseFloat(shippingPrice), currency: 'gbp'},
-                    variants
-                };
+                request.continue();
             }
-        } catch (e) {
-            console.log(e);
+        });
 
+        logger.nfo('Begin coldcuts bender', this.variants);
+
+        for (const [value, index] of variants.entries()) {
+            await this.page.goto(index.shopId);
+            await this.page.waitFor(1500);
+
+            const itemIsAvailable = await this.page.evaluate(() => {
+                return document.querySelectorAll('#add-to-cart').length !== 0;
+            });
+            this.variants[value].available = itemIsAvailable;
+
+            if (itemIsAvailable) {
+                await this.page.evaluate(() => {
+                    document.querySelector(`#add-to-cart`).click();
+                });
+                await this.page.waitFor(1000);
+            } else {
+                const allUnavailable = _.filter(variants, 'available').length === 0;
+                const endOfArray = value + 1 === variants.length;
+
+                if (endOfArray && allUnavailable) {
+                    return {type: 'all-unavailable', retailerId: this.retailerId, variants}
+                }
+            }
+        }
+        await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
+        await this.fillShippingInfos();
+        await this.page.click(`form > div.step__footer > button`);
+
+        await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
+        const shippingPriceRaw = await this.page.evaluate(() => {
+            return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
+        });
+        const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
+
+        logger.nfo('End coldcuts bender', this.variants);
+
+        if (checkout) {
+
+        } else {
+            return {
+                type: 'shipping',
+                retailerId: this.retailerId,
+                shipping: {price: parseFloat(shippingPrice), currency: 'gbp'},
+                variants
+            };
         }
     }
 

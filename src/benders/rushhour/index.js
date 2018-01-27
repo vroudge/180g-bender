@@ -53,7 +53,7 @@ export default class Rushhour {
 
         await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
         await this.fillShippingInfo();
-        await this.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
+        await this.page.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
 
         await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
         await this.page.waitForSelector(`#shipment > select`);
@@ -71,7 +71,7 @@ export default class Rushhour {
             document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
         });
 
-        logger.nfo('Rushhour - End of shared flow');
+        logger.nfo('End rushhour bender', this.variants);
 
         if (checkout) {
             await this.page.waitForSelector(`input.bttn`);
