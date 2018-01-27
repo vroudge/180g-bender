@@ -52,10 +52,15 @@ export default class Juno {
         }
 
         await this.page.goto('https://www.juno.co.uk/cart/');
+        logger.nfo('Juno in cart')
         await this.page.waitForSelector(`select.delivery_country`);
+        logger.nfo('Juno wait for delivery country select')
         await this.page.select('select.delivery_country', junoCountryCodes[this.destinationAddress.country]);
+        logger.nfo('Juno done select country');
         await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
+        logger.nfo('Juno clicking confirm');
         await this.page.waitForSelector(`#shipping_val`);
+        logger.nfo('Juno eval shipping');
         const shippingPrice = await this.page.evaluate(() => {
             return document.querySelectorAll(`#shipping_val`)[0].textContent.replace('€', '');
         });
