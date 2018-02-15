@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import config from '../../config';
 import logger from '../../lib/logger'
-import junoCountryCodes from './countryCodesMap'
+import countryCodes from './countryCodesMap'
 
 export default class Juno {
     constructor(browserInstance, {variants, retailerId, destinationAddress}) {
@@ -54,18 +54,19 @@ export default class Juno {
 
         await this.page.goto('https://www.juno.co.uk/cart/');
         await this.page.waitForSelector(`select.delivery_country`);
-        await this.page.select('select.delivery_country', junoCountryCodes[this.destinationAddress.country]);
+        await this.page.select('select.delivery_country', countryCodes[this.destinationAddress.country]);
         await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
         await this.page.waitForSelector(`#shipping_val`);
         const shippingPrice = await this.page.evaluate(() => {
             return document.querySelectorAll(`#shipping_val`)[0].textContent.replace('€', '');
         });
-        logger.nfo('End juno bender', this.variants);
 
         if (checkout) {
             await this.login();
             await this.fillShippingInfo();
+            if (process.env.NODE_ENV === 'production') await this.page.click(`#co_submit_1`);
         } else {
+            logger.nfo('End juno bender', this.variants);
             return {
                 type: 'shipping',
                 retailerId: this.retailerId,

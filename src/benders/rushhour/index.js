@@ -2,6 +2,7 @@ import _ from 'lodash';
 
 import config from '../../config';
 import logger from "../../lib/logger";
+import countryCodes from './countryCodesMap'
 
 export default class Rushhour {
     constructor(browserInstance, {variants, retailerId, destinationAddress}) {
@@ -29,6 +30,7 @@ export default class Rushhour {
         });
 
         await this.login();
+
         logger.nfo('Begin Rushhour Bender', this.variants);
         for (const [value, index] of variants.entries()) {
             const id = index.shopId.split('item=')[1];
@@ -53,6 +55,7 @@ export default class Rushhour {
 
         await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
         await this.fillShippingInfo();
+
         await this.page.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
 
         await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
@@ -65,15 +68,16 @@ export default class Rushhour {
             return text.split('€ ')[1].split(',')[0]
         });
 
-        await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
-        await this.page.evaluate(() => {
-            document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
-            document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
-        });
-
-        logger.nfo('End rushhour bender', this.variants);
 
         if (checkout) {
+            await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
+            await this.page.evaluate(() => {
+                document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
+                document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
+            });
+
+            logger.nfo('End rushhour bender', this.variants);
+
             await this.page.waitForSelector(`input.bttn`);
             await this.page.waitFor(1000);
             await this.page.evaluate(() => {
@@ -89,7 +93,12 @@ export default class Rushhour {
 
             return {type: 'checkout', value: 'success'}
         } else {
-            return {type: 'shipping', retailerId: this.retailerId, shipping: {price: shippingPrice, currency: 'eur'}, variants};
+            return {
+                type: 'shipping',
+                retailerId: this.retailerId,
+                shipping: {price: shippingPrice, currency: 'eur'},
+                variants
+            };
         }
     }
 
@@ -102,10 +111,10 @@ export default class Rushhour {
             document.querySelector('input[type="password"]').value = password;
         }, config.accounts.rushhour.password);
         await this.page.click('#main-content > form > table > tbody > tr:nth-child(4) > td > input');
+        await this.page.waitFor(2000);
     }
 
     async fillShippingInfo() {
-
         await this.fillField(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(12) > td:nth-child(2) > input`,
             `${this.destinationAddress.last_name} ${this.destinationAddress.first_name}`);
         await this.fillField(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(13) > td:nth-child(2) > input`,
@@ -113,10 +122,10 @@ export default class Rushhour {
         await this.fillField(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(15) > td:nth-child(2) > input`,
             this.destinationAddress.city);
         await this.fillField(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(16) > td:nth-child(2) > input[type="text"]`,
-            this.destinationAddress.city);
+            this.destinationAddress.state);
         await this.fillField(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(14) > td:nth-child(2) > input`,
             this.destinationAddress.zip);
-        await this.page.select('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(17) > td:nth-child(2) > select', `75`);
+        await this.page.select('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(17) > td:nth-child(2) > select', countryCodes[this.destinationAddress.country]);
     }
 
     async fillCreditCardInfo() {
@@ -124,7 +133,7 @@ export default class Rushhour {
         await this.page.select('#Ecom_Payment_Card_ExpDate_Month', config.finance.expiryMonth);
         await this.page.select('#Ecom_Payment_Card_ExpDate_Year', config.finance.expiryYear);
         await this.fillField(`#Ecom_Payment_Card_Verification`, config.finance.cvv);
-        await this.page.click(`#submit3`);
+        if (process.env.NODE_ENV === 'production') await this.page.click(`#submit3`);
     }
 
     async fillField(selector, value) {

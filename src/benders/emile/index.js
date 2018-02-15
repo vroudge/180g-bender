@@ -57,12 +57,14 @@ export default class emile {
         await this.page.waitFor(4000);
         await this.page.select(`select.countrySelect`, emileCountryCodes[this.destinationAddress.country]);
 
-        await this.fillShippingInfos();
 
         logger.nfo('End Emile bender', this.variants);
 
         if (checkout) {
             await this.fillPaymentInfo();
+            //checkout
+            await this.page.waitFor(4000);
+            await this.fillShippingInfos();
             return {type: 'checkout', value: 'success'};
         } else {
             const shippingPrice = await this.page.evaluate(() => {
@@ -94,10 +96,8 @@ export default class emile {
             await this.page.type(`#addressLine2`, this.destinationAddress.line2);
             await this.page.type(`#city`, this.destinationAddress.city);
             await this.page.type(`#postCode`, this.destinationAddress.zip);
-            console.log('9');
         } catch (e) {
-            console.log(e);
-
+            logger.nfo(e);
         }
     }
 
@@ -124,7 +124,8 @@ export default class emile {
         await cbNumber.type(config.finance.ccNumber);
         await expiryDate.type(`${config.finance.expiryMonth}${config.finance.expiryYearShort}`);
         await cvv.type(config.finance.cvv);
-        await checkoutButton.click();
+        if(process.env.NODE_ENV==='production') await checkoutButton.click();
+        await this.page.waitFor(200000);
     }
 
     async waitForFrame(page, frameName) {

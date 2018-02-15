@@ -1,4 +1,7 @@
+import kek from 'puppeteer/node6/ElementHandle'
+
 import puppeteer from 'puppeteer';
+
 import _ from 'lodash';
 
 import * as Benders from '../../benders'
@@ -42,15 +45,17 @@ export default (job, ctx, done) => ({
                 return acc;
             }, {});
 
-            if(process.env.NODE_ENV === 'production'){
+            if (process.env.NODE_ENV === 'production') {
                 browser = await puppeteer.launch({
                     headless: true,
+                    ignoreHTTPSErrors: true,
                     executablePath: '/usr/bin/chromium-browser',
                     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
                 });
-            }else{
+            } else {
                 browser = await puppeteer.launch({
                     headless: false,
+                    ignoreHTTPSErrors: true,
                     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
                 });
             }

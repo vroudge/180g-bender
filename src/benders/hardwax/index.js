@@ -62,13 +62,14 @@ export default class Hardwax {
             const selIndex = listbox.selectedIndex;
             return listbox.options[selIndex].text.split('€ ')[1];
         });
-
         logger.nfo('End hardwax bender', this.variants);
 
         if (checkout) {
             await Hardwax.fillPaymentInfo(frame);
-            await this.page.click(`#id_accept`);
-            await this.page.click(`#id_send_order`);
+            if (process.env.NODE_ENV === 'production') {
+                await this.page.click(`#id_accept`);
+                await this.page.click(`#id_send_order`);
+            }
             return {type: 'checkout', value: 'success'}
         } else {
             return {

@@ -1,6 +1,7 @@
 import config from '../../config';
 import logger from '../../lib/logger';
 import _ from 'lodash';
+import countryCodes from "./countryCodesMap";
 
 export default class sideone {
     constructor(browserInstance, {variants, retailerId, destinationAddress}) {
@@ -109,7 +110,7 @@ export default class sideone {
         await this.page.type(`#client_zipcode`, config.gram.zip);
         await this.page.type(`#client_city`, config.gram.city);
 
-        await this.page.select(`#delivery_region`, `1143020057`);
+        await this.page.select(`#delivery_region`, countryCodes[this.destinationAddress.country]);
         await this.page.type(`#delivery_firstname`, this.destinationAddress.first_name);
         await this.page.type(`#delivery_lastname`, this.destinationAddress.last_name);
         await this.page.type(`#delivery_additional`, this.destinationAddress.line2);

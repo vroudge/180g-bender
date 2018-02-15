@@ -138,15 +138,20 @@ const conf = convict({
         misbits: {
             login: {
                 format: String,
-                default: '',
+                default: 'valentin@180gram.io',
             },
             password: {
                 format: String,
-                default: '',
+                default: 'e77p90pn',
             },
         },
     },
     finance: {
+        ccFullName: {
+            doc: `cardholder name`,
+            format: String,
+            default: `Valentin Roudge`
+        },
         ccNumber: {
             doc: `Credit card number`,
             format: String,

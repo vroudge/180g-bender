@@ -1,18 +1,13 @@
-import puppeteer from 'puppeteer';
 import { getOrCreateQueue, attachQueueProcessors } from './queue/utils'
-import * as Benders from './benders'
 import logger from './lib/logger'
 
-const destinationAddress = {
-    first_name: 'Valentin',
-    last_name: 'Roudge',
-    line1: '54 Rue Merlin',
-    line2: '4eme gauche',
-    city: 'Paris',
-    state: 'IDF',
-    zip: '75011',
-    country: 'fr'
-};
+// juno OK 100%
+// rushhour OK 100%
+// hardwax OK 100%
+// coldcuts OK 100%
+// sideone ?flow?
+// emile OK 100%
+// misbits OK 100%
 
 (async () => {
     try {
