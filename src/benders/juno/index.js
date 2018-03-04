@@ -72,6 +72,7 @@ export default class Juno {
             await this.fillShippingInfo();
             logger.nfo('Juno submit order', this.variants);
             await this.page.click(`#checkout-table > div:nth-child(5) > div:nth-child(1) > div.col-12.col-lg-5.pt-1.input > input`);
+            logger.nfo('Click submit juno', this.variants);
             if (process.env.NODE_ENV === 'production') await this.page.click(`#co_submit_1`);
         } else {
             logger.nfo('End juno bender', this.variants);
