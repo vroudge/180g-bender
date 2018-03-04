@@ -67,7 +67,7 @@ const conf = convict({
         },
         email: {
             format: String,
-            default: `valentin@180gram.io`
+            default: `orders@180gram.io`
         },
         phone: {
             format: String,
@@ -78,71 +78,41 @@ const conf = convict({
         juno: {
             login: {
                 format: String,
-                default: 'v.roudge@gmail.com',
+                default: 'orders@180gram.io',
             },
             password: {
                 format: String,
-                default: 'e77P90pn',
+                default: 'yoloswag2017',
             }
         },
         rushhour: {
             login: {
                 format: String,
-                default: 'v.roudge@gmail.com',
+                default: 'orders@180gram.io',
             },
             password: {
                 format: String,
-                default: 'e77p90pn',
-            },
-        },
-        hardwax: {
-            login: {
-                format: String,
-                default: '',
-            },
-            password: {
-                format: String,
-                default: '',
-            },
-        },
-        coldcuts: {
-            login: {
-                format: String,
-                default: '',
-            },
-            password: {
-                format: String,
-                default: '',
+                default: 'yoloswag2017',
             },
         },
         sideone: {
             login: {
                 format: String,
-                default: '180gram',
+                default: 'orders@180gram.io',
             },
             password: {
                 format: String,
-                default: 'e77P90pn',
-            },
-        },
-        emile: {
-            login: {
-                format: String,
-                default: '',
-            },
-            password: {
-                format: String,
-                default: '',
+                default: 'yoloswag2017',
             },
         },
         misbits: {
             login: {
                 format: String,
-                default: 'valentin@180gram.io',
+                default: 'orders@180gram.io',
             },
             password: {
                 format: String,
-                default: 'e77p90pn',
+                default: 'yoloswag2017',
             },
         },
     },
@@ -150,7 +120,7 @@ const conf = convict({
         ccFullName: {
             doc: `cardholder name`,
             format: String,
-            default: `Valentin Roudge`
+            default: `Louis de Larrard`
         },
         ccNumber: {
             doc: `Credit card number`,
