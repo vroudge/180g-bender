@@ -51,19 +51,26 @@ export default class Juno {
                 }
             }
         }
-
+        logger.nfo('Juno bender go to cart', this.variants);
         await this.page.goto('https://www.juno.co.uk/cart/');
+        logger.nfo('Juno wait delivery country', this.variants);
         await this.page.waitForSelector(`select.delivery_country`);
+        logger.nfo('Juno select delivery country', this.variants);
         await this.page.select('select.delivery_country', countryCodes[this.destinationAddress.country]);
+        logger.nfo('Juno click1', this.variants);
         await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
+        logger.nfo('Juno shipping value get', this.variants);
         await this.page.waitForSelector(`#shipping_val`);
         const shippingPrice = await this.page.evaluate(() => {
             return document.querySelectorAll(`#shipping_val`)[0].textContent.replace('€', '');
         });
 
         if (checkout) {
+            logger.nfo('Juno login', this.variants);
             await this.login();
+            logger.nfo('Juno fill shipping info', this.variants);
             await this.fillShippingInfo();
+            logger.nfo('Juno submit order', this.variants);
             if (process.env.NODE_ENV === 'production') await this.page.click(`#co_submit_1`);
         } else {
             logger.nfo('End juno bender', this.variants);
