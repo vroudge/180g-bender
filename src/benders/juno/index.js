@@ -71,6 +71,7 @@ export default class Juno {
             logger.nfo('Juno fill shipping info', this.variants);
             await this.fillShippingInfo();
             logger.nfo('Juno submit order', this.variants);
+            await this.page.click(`#checkout-table > div:nth-child(5) > div:nth-child(1) > div.col-12.col-lg-5.pt-1.input > input`);
             if (process.env.NODE_ENV === 'production') await this.page.click(`#co_submit_1`);
         } else {
             logger.nfo('End juno bender', this.variants);
@@ -103,7 +104,6 @@ export default class Juno {
         await this.fillField(`#state_county`, this.destinationAddress.state);
         await this.fillField(`#postcode`, this.destinationAddress.zip);
         await this.fillField(`#cvv`, config.finance.cvv);
-        console.log('done fill shipping juno');
     }
 
     async fillField(selector, value) {
