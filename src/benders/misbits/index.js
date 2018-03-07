@@ -64,12 +64,17 @@ export default class misbits {
             await this.page.goto(`https://www.misbits.ro/checkout/`);
             await this.login();
             await this.fillShippingAndBillingInfo();
-            await this.page.evaluate(()=>{
+            await this.page.evaluate(() => {
                 document.querySelector(`#place_order`).click()
             });
             await this.page.waitForSelector(`a.txtCheckout`);
             await this.page.click(`a.txtCheckout`);
             await this.fillPaymentInfo();
+            if (process.env.NODE_ENV === 'production') {
+                await this.page.click(`#button_status`);
+                await this.page.waitFor(8000);
+            }
+            return {type: 'checkout', value: 'success'}
         } else {
             return {
                 type: 'shipping',
@@ -80,7 +85,7 @@ export default class misbits {
         }
     }
 
-    async login(){
+    async login() {
         await this.page.waitForSelector([
             '#billing_first_name',
             '#billing_last_name',
@@ -119,7 +124,7 @@ export default class misbits {
         await this.fillField(`#shipping_city`, this.destinationAddress.city);
     }
 
-    async fillPaymentInfo(){
+    async fillPaymentInfo() {
         await this.page.waitForSelector([
             '#card',
             '#exp_month',
@@ -132,7 +137,6 @@ export default class misbits {
         await this.page.select(`#exp_year`, config.finance.expiryYearShort);
         await this.fillField(`#cvv2`, config.finance.cvv);
         await this.fillField(`#name_on_card`, config.finance.ccFullName);
-        if(process.env.NODE_ENV==='production') await this.page.click(`#button_status`);
     }
 
     async fillField(selector, value) {

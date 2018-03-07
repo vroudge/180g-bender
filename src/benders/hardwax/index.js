@@ -69,6 +69,7 @@ export default class Hardwax {
             if (process.env.NODE_ENV === 'production') {
                 await this.page.click(`#id_accept`);
                 await this.page.click(`#id_send_order`);
+                await this.page.waitFor(8000);
             }
             return {type: 'checkout', value: 'success'}
         } else {

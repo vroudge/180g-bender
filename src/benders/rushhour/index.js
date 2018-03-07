@@ -91,6 +91,10 @@ export default class Rushhour {
             ]);
             await this.fillCreditCardInfo();
 
+            if (process.env.NODE_ENV === 'production') {
+                await this.page.click(`#submit3`);
+                await this.page.waitFor(8000);
+            }
             return {type: 'checkout', value: 'success'}
         } else {
             return {
@@ -133,7 +137,6 @@ export default class Rushhour {
         await this.page.select('#Ecom_Payment_Card_ExpDate_Month', config.finance.expiryMonth);
         await this.page.select('#Ecom_Payment_Card_ExpDate_Year', config.finance.expiryYear);
         await this.fillField(`#Ecom_Payment_Card_Verification`, config.finance.cvv);
-        if (process.env.NODE_ENV === 'production') await this.page.click(`#submit3`);
     }
 
     async fillField(selector, value) {

@@ -62,6 +62,8 @@ export default class emile {
             if (process.env.NODE_ENV === 'production') {
                 await this.page.waitForSelector(`button.step__footer__continue-btn.btn `)
             }
+            await this.page.waitFor(8000);
+            return {type: 'checkout', value: 'success'}
         } else {
             return {
                 type: 'shipping',
