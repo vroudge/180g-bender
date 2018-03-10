@@ -73,7 +73,7 @@ export default (job, ctx, done) => ({
             await browser.close();
         } catch (e) {
             if (browser) await browser.close();
-            logger.err(`Error in get-shipping`, {...e, stack: e.stack});
+            logger.err(`Error in checkout`, {...e, stack: e.stack});
             return done(e);
         }
         return done(null, JSON.stringify(result));

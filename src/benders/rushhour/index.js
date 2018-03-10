@@ -18,17 +18,6 @@ export default class Rushhour {
 
         this.page = await bro.newPage();
 
-        await this.page.setRequestInterceptionEnabled(true);
-        this.page.on('request', request => {
-            const intercepted = ['image', 'font'];
-
-            if (intercepted.includes(request.resourceType)) {
-                request.abort();
-            } else {
-                request.continue();
-            }
-        });
-
         await this.login();
 
         logger.nfo('Begin Rushhour Bender', this.variants);
@@ -52,12 +41,10 @@ export default class Rushhour {
                 }
             }
         }
-
         await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
         await this.fillShippingInfo();
 
         await this.page.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
-
         await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
         await this.page.waitForSelector(`#shipment > select`);
 
@@ -68,18 +55,19 @@ export default class Rushhour {
             return text.split('€ ')[1].split(',')[0]
         });
 
+        logger.nfo('End rushhour bender', this.variants);
 
         if (checkout) {
+            await this.page.waitFor(4000);
             await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
             await this.page.evaluate(() => {
                 document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
                 document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
             });
-
-            logger.nfo('End rushhour bender', this.variants);
-
             await this.page.waitForSelector(`input.bttn`);
-            await this.page.waitFor(1000);
+            await this.page.waitFor(4000);
+
+
             await this.page.evaluate(() => {
                 document.querySelectorAll(`input.bttn`)[0].click()
             });
@@ -90,11 +78,11 @@ export default class Rushhour {
                 '#Ecom_Payment_Card_Verification'
             ]);
             await this.fillCreditCardInfo();
-
-            if (process.env.NODE_ENV === 'production') {
+            //if (process.env.NODE_ENV === 'production') {
                 await this.page.click(`#submit3`);
                 await this.page.waitFor(8000);
-            }
+            //}
+            await this.page.waitFor(5000);
             return {type: 'checkout', value: 'success'}
         } else {
             return {
@@ -133,6 +121,7 @@ export default class Rushhour {
     }
 
     async fillCreditCardInfo() {
+        await this.page.waitFor(2000);
         await this.fillField(`#Ecom_Payment_Card_Number`, config.finance.ccNumber);
         await this.page.select('#Ecom_Payment_Card_ExpDate_Month', config.finance.expiryMonth);
         await this.page.select('#Ecom_Payment_Card_ExpDate_Year', config.finance.expiryYear);

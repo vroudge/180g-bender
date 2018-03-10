@@ -63,11 +63,12 @@ export default class Juno {
         if (checkout) {
             await this.login();
             await this.fillShippingInfo();
-            await this.page.click(`#checkout-table > div:nth-child(5) > div:nth-child(1) > div.col-12.col-lg-5.pt-1.input > input`);
+
             if (process.env.NODE_ENV === 'production') {
                 await this.page.click(`#co_submit_1`);
-                await this.page.waitFor(8000);
+                await this.page.waitFor(800000);
             }
+            return {type: 'checkout', value: 'success'}
         } else {
             logger.nfo('End juno bender', this.variants);
             return {
@@ -85,7 +86,6 @@ export default class Juno {
         await this.page.type(`#email`, config.accounts.juno.login);
         await this.page.type(`#password`, config.accounts.juno.password);
         await this.page.click('#login-form > tbody > tr:nth-child(4) > td.input > input');
-        console.log('done login juno');
     }
 
     async fillShippingInfo() {
