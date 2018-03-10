@@ -78,10 +78,10 @@ export default class Rushhour {
                 '#Ecom_Payment_Card_Verification'
             ]);
             await this.fillCreditCardInfo();
-            //if (process.env.NODE_ENV === 'production') {
+            if (process.env.NODE_ENV === 'production') {
                 await this.page.click(`#submit3`);
                 await this.page.waitFor(8000);
-            //}
+            }
             await this.page.waitFor(5000);
             return {type: 'checkout', value: 'success'}
         } else {
