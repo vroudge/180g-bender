@@ -59,9 +59,13 @@ export default class emile {
             await this.page.click(`#checkout_different_billing_address_true`);
             await this.fillBillingInfos();
             await this.page.click(`button.step__footer__continue-btn.btn`);
+
             if (process.env.NODE_ENV === 'production') {
-                await this.page.waitForSelector(`button.step__footer__continue-btn.btn `)
+                await this.page.waitForSelector(`body > div.content > div > div.main > div.main__content > div > form > div > button`);
+                await this.page.waitFor(3000);
+                await this.page.click(`body > div.content > div > div.main > div.main__content > div > form > div > button`);
             }
+
             await this.page.waitFor(8000);
             return {type: 'checkout', value: 'success'}
         } else {
