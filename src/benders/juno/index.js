@@ -66,7 +66,6 @@ export default class Juno {
 
             if (process.env.NODE_ENV === 'production') {
                 await this.page.click(`#co_submit_1`);
-                await this.page.waitFor(800000);
             }
             return {type: 'checkout', value: 'success'}
         } else {
