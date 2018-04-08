@@ -12,69 +12,80 @@ export default class emile {
     }
 
     async start({checkout}) {
-        const {variants, bro} = this;
-        this.page = await bro.newPage();
+        try {
+            const {variants, bro} = this;
+            this.page = await bro.newPage();
+            const things = [];
+            logger.nfo('Begin coldcuts bender', this.variants);
 
-        logger.nfo('Begin coldcuts bender', this.variants);
-
-        for (const [value, index] of variants.entries()) {
-            await this.page.goto(index.shopId);
-            await this.page.waitFor(1500);
-            const itemIsAvailable = await this.page.evaluate(() => {
-                return document.querySelectorAll('#add-to-cart').length !== 0;
-            });
-            this.variants[value].available = itemIsAvailable;
-
-            if (itemIsAvailable) {
-                await this.page.evaluate(() => {
-                    document.querySelector(`#add-to-cart`).click();
+            for (const [value, index] of variants.entries()) {
+                await this.page.goto(index.shopId);
+                await this.page.waitFor(1500);
+                const itemIsAvailable = await this.page.evaluate(() => {
+                    return document.querySelectorAll('#add-to-cart').length !== 0;
                 });
-                await this.page.waitFor(1000);
-            } else {
-                const allUnavailable = _.filter(variants, 'available').length === 0;
-                const endOfArray = value + 1 === variants.length;
+                this.variants[value].available = itemIsAvailable;
 
-                if (endOfArray && allUnavailable) {
-                    return {type: 'all-unavailable', retailerId: this.retailerId, variants}
+                if (itemIsAvailable) {
+                    await this.page.evaluate(() => {
+                        document.querySelector(`#add-to-cart`).click();
+                    });
+                    await this.page.waitFor(1000);
+                } else {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
+                    const endOfArray = value + 1 === variants.length;
+
+                    if (endOfArray && allUnavailable) {
+                        return {type: 'all-unavailable', retailerId: this.retailerId, variants}
+                    }
                 }
             }
-        }
-        await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
-        await this.fillShippingInfos();
-        await this.page.click(`form > div.step__footer > button`);
-        await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
-        const shippingPriceRaw = await this.page.evaluate(() => {
-            return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
-        });
-        const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
+            things.push('Done availability');
+            await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
+            things.push('Done gotocheckout');
+            await this.fillShippingInfos();
+            things.push('Done filling shipping');
+            await this.page.click(`form > div.step__footer > button`);
+            things.push('Done clicking form step button');
+            await this.page.waitForSelector(`label > span.radio__label__accessory > span`);
+            things.push('Done before shipping price');
+            const shippingPriceRaw = await this.page.evaluate(() => {
+                return document.querySelectorAll('label > span.radio__label__accessory > span')[1].textContent;
+            });
+            things.push('Done getting shipping price');
+            const shippingPrice = shippingPriceRaw.replace(/\s/g, '').replace(`£`, ``);
 
-        logger.nfo('End coldcuts bender', this.variants);
+            logger.nfo('End coldcuts bender', this.variants);
 
-        if (checkout) {
-            await this.page.click(`div.section--shipping-method > div.section__content > fieldset > div:nth-child(3) > div.radio-wrapper > div.radio__input > input`);
-            await this.page.click(`div.step__footer > button`);
-            await this.page.waitForSelector(`iframe.card-fields-iframe`);
-            await this.page.waitFor(10000);
-            await this.getAllPaymentFields();
-            await this.page.click(`#checkout_different_billing_address_true`);
-            await this.fillBillingInfos();
-            await this.page.click(`button.step__footer__continue-btn.btn`);
+            if (checkout) {
+                await this.page.click(`div.section--shipping-method > div.section__content > fieldset > div:nth-child(3) > div.radio-wrapper > div.radio__input > input`);
+                await this.page.click(`div.step__footer > button`);
+                await this.page.waitForSelector(`iframe.card-fields-iframe`);
+                await this.page.waitFor(10000);
+                await this.getAllPaymentFields();
+                await this.page.click(`#checkout_different_billing_address_true`);
+                await this.fillBillingInfos();
+                await this.page.click(`button.step__footer__continue-btn.btn`);
 
-            if (process.env.NODE_ENV === 'production') {
-                await this.page.waitForSelector(`body > div.content > div > div.main > div.main__content > div > form > div > button`);
-                await this.page.waitFor(3000);
-                await this.page.click(`body > div.content > div > div.main > div.main__content > div > form > div > button`);
+                if (process.env.NODE_ENV === 'production') {
+                    await this.page.waitForSelector(`body > div.content > div > div.main > div.main__content > div > form > div > button`);
+                    await this.page.waitFor(3000);
+                    await this.page.click(`body > div.content > div > div.main > div.main__content > div > form > div > button`);
+                }
+
+                await this.page.waitFor(8000);
+                return {type: 'checkout', value: 'success'}
+            } else {
+                return {
+                    type: 'shipping',
+                    retailerId: this.retailerId,
+                    shipping: {price: parseFloat(shippingPrice), currency: 'gbp'},
+                    variants
+                };
             }
-
-            await this.page.waitFor(8000);
-            return {type: 'checkout', value: 'success'}
-        } else {
-            return {
-                type: 'shipping',
-                retailerId: this.retailerId,
-                shipping: {price: parseFloat(shippingPrice), currency: 'gbp'},
-                variants
-            };
+        } catch (e) {
+            logger.error('Error in colducts bender', {things})
+            throw e;
         }
     }
 
