@@ -58,7 +58,7 @@ export default class emile {
         await this.page.waitForSelector(`select.countrySelect`);
         await this.page.select(`select.countrySelect`, emileCountryCodes[this.destinationAddress.country]);
         await this.page.waitFor(4000);
-        logger.nfo('End Emile bender', this.variants);
+
 
         if (checkout) {
             await this.fillPaymentInfo();
@@ -69,6 +69,7 @@ export default class emile {
             return {type: 'checkout', value: 'success'};
         } else {
             const shippingPrice = await this.getShippingPrice();
+            logger.nfo('End Emile bender', this.variants);
             return {
                 type: 'shipping',
                 retailerId: this.retailerId,
@@ -78,17 +79,24 @@ export default class emile {
         }
     }
 
-    async getShippingPrice(){
-        await this.page.waitFor(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`);
+    async getShippingPrice() {
+        await this.page.waitFor(`#basketView > div:nth-child(3) > div.col-xs-9 > div > p:nth-child(2)`);
         const shippingPrice = await this.page.evaluate(() => {
-            return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`)
-                .textContent.replace('€', '');
+            return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-9 > div > p:nth-child(2)`).innerHTML;
         });
 
-        if(_.isNaN(parseFloat(shippingPrice))){
+        try {
+            const patternShipping = /[+-]?\d+(\.\d+)?/g;
+            const cleanString = shippingPrice.replace('(', '').replace(')','').match(patternShipping)[0];
+
+            if (!_.isNaN(parseFloat(cleanString))) {
+                return cleanString;
+            }
+            // noinspection ExceptionCaughtLocallyJS
+            throw new Error();
+
+        } catch (e) {
             return await this.getShippingPrice();
-        } else {
-            return shippingPrice;
         }
     }
 
