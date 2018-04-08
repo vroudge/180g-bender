@@ -54,9 +54,10 @@ export default class emile {
         }
 
         await this.page.goto(`https://chezemile-records.com/home`);
-        await this.page.waitFor(4000);
+        await this.page.waitFor(2000);
+        await this.page.waitForSelector(`select.countrySelect`);
         await this.page.select(`select.countrySelect`, emileCountryCodes[this.destinationAddress.country]);
-
+        await this.page.waitFor(4000);
         logger.nfo('End Emile bender', this.variants);
 
         if (checkout) {
@@ -67,17 +68,27 @@ export default class emile {
             await this.page.waitFor(8000);
             return {type: 'checkout', value: 'success'};
         } else {
-            const shippingPrice = await this.page.evaluate(() => {
-                return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`)
-                    .textContent.replace('€', '');
-            });
-
+            const shippingPrice = await this.getShippingPrice();
             return {
                 type: 'shipping',
                 retailerId: this.retailerId,
                 shipping: {price: shippingPrice, currency: 'eur'},
                 variants
             };
+        }
+    }
+
+    async getShippingPrice(){
+        await this.page.waitFor(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`);
+        const shippingPrice = await this.page.evaluate(() => {
+            return document.querySelector(`#basketView > div:nth-child(3) > div.col-xs-3.pull-right > p`)
+                .textContent.replace('€', '');
+        });
+
+        if(_.isNaN(parseFloat(shippingPrice))){
+            return await this.getShippingPrice();
+        } else {
+            return shippingPrice;
         }
     }
 
