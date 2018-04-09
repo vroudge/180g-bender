@@ -12,10 +12,10 @@ export default class emile {
     }
 
     async start({checkout}) {
+        let things = [];
         try {
             const {variants, bro} = this;
             this.page = await bro.newPage();
-            const things = [];
             logger.nfo('Begin coldcuts bender', this.variants);
 
             for (const [value, index] of variants.entries()) {
