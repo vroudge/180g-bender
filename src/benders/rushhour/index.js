@@ -14,83 +14,96 @@ export default class Rushhour {
     }
 
     async start({checkout}) {
-        const {variants, bro} = this;
+        const logging = [];
+        try {
+            const {variants, bro} = this;
+            this.page = await bro.newPage();
+            logging.push('before login');
+            await this.login();
+            logging.push('after login');
+            logger.nfo('Begin Rushhour Bender', this.variants);
+            for (const [value, index] of variants.entries()) {
+                const id = index.shopId.split('item=')[1];
+                const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
+                logging.push('after add to cart');
+                await this.page.goto(addToCart);
+                logging.push('done going to addtocart');
+                const itemIsAvailable = await this.page.evaluate(() => {
+                    return !document.querySelector(`#message`).textContent.includes(`out of stock`);
+                });
+                logging.push('after item available');
+                this.variants[value].available = itemIsAvailable;
 
-        this.page = await bro.newPage();
+                if (!itemIsAvailable) {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
+                    const endOfArray = value + 1 === variants.length;
 
-        await this.login();
-
-        logger.nfo('Begin Rushhour Bender', this.variants);
-        for (const [value, index] of variants.entries()) {
-            const id = index.shopId.split('item=')[1];
-            const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
-
-            await this.page.goto(addToCart);
-            const itemIsAvailable = await this.page.evaluate(() => {
-                return !document.querySelector(`#message`).textContent.includes(`out of stock`);
-            });
-
-            this.variants[value].available = itemIsAvailable;
-
-            if (!itemIsAvailable) {
-                const allUnavailable = _.filter(variants, 'available').length === 0;
-                const endOfArray = value + 1 === variants.length;
-
-                if (endOfArray && allUnavailable) {
-                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+                    if (endOfArray && allUnavailable) {
+                        return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+                    }
                 }
             }
-        }
-        await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
-        await this.fillShippingInfo();
+            logging.push('before checkout');
+            await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
+            logging.push('after checkout');
+            await this.fillShippingInfo();
+            logging.push('after fill shipping');
 
-        await this.page.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
-        await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
-        await this.page.waitForSelector(`#shipment > select`);
-
-        const shippingPrice = await this.page.evaluate(() => {
-            document.querySelector('#shipment > select').value = 4;
-            document.querySelector(`#shipment > select`).onchange();
-            const text = document.querySelector('#shipment > select > option:nth-child(2)').textContent;
-            return text.split('€ ')[1].split(',')[0]
-        });
-
-        logger.nfo('End rushhour bender', this.variants);
-
-        if (checkout) {
-            await this.page.waitFor(4000);
-            await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
-            await this.page.evaluate(() => {
-                document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
-                document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
+            await this.page.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
+            logging.push('first selector done');
+            await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
+            logging.push('first click done');
+            await this.page.waitForSelector(`#shipment > select`);
+            logging.push('second selector done');
+            const shippingPrice = await this.page.evaluate(() => {
+                document.querySelector('#shipment > select').value = 4;
+                document.querySelector(`#shipment > select`).onchange();
+                const text = document.querySelector('#shipment > select > option:nth-child(2)').textContent;
+                return text.split('€ ')[1].split(',')[0]
             });
-            await this.page.waitForSelector(`input.bttn`);
-            await this.page.waitFor(4000);
+            logging.push('done eval shipping price');
+
+            logger.nfo('End rushhour bender', this.variants);
+
+            if (checkout) {
+                await this.page.waitFor(4000);
+                await this.page.waitForSelector(`#shipment > input[type="checkbox"]:nth-child(13)`);
+                await this.page.evaluate(() => {
+                    document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').checked = 'checked';
+                    document.querySelector('#shipment > input[type="checkbox"]:nth-child(13)').onchange();
+                });
+                await this.page.waitForSelector(`input.bttn`);
+                await this.page.waitFor(4000);
 
 
-            await this.page.evaluate(() => {
-                document.querySelectorAll(`input.bttn`)[0].click()
-            });
-            await this.page.waitForSelector([
-                '#Ecom_Payment_Card_Number',
-                '#Ecom_Payment_Card_ExpDate_Month',
-                '#Ecom_Payment_Card_ExpDate_Year',
-                '#Ecom_Payment_Card_Verification'
-            ]);
-            await this.fillCreditCardInfo();
-            if (process.env.NODE_ENV === 'production') {
-                await this.page.click(`#submit3`);
-                await this.page.waitFor(8000);
+                await this.page.evaluate(() => {
+                    document.querySelectorAll(`input.bttn`)[0].click()
+                });
+                await this.page.waitForSelector([
+                    '#Ecom_Payment_Card_Number',
+                    '#Ecom_Payment_Card_ExpDate_Month',
+                    '#Ecom_Payment_Card_ExpDate_Year',
+                    '#Ecom_Payment_Card_Verification'
+                ]);
+                await this.fillCreditCardInfo();
+                if (process.env.NODE_ENV === 'production') {
+                    await this.page.click(`#submit3`);
+                    await this.page.waitFor(8000);
+                }
+                await this.page.waitFor(5000);
+                return {type: 'checkout', value: 'success'}
+            } else {
+                logging.push('done');
+                return {
+                    type: 'shipping',
+                    retailerId: this.retailerId,
+                    shipping: {price: shippingPrice, currency: 'eur'},
+                    variants
+                };
             }
-            await this.page.waitFor(5000);
-            return {type: 'checkout', value: 'success'}
-        } else {
-            return {
-                type: 'shipping',
-                retailerId: this.retailerId,
-                shipping: {price: shippingPrice, currency: 'eur'},
-                variants
-            };
+        } catch (e) {
+            logger.err('Error in rushhour bender', {error:e.message, stack:e.stack, data: logging});
+            throw e;
         }
     }
 
