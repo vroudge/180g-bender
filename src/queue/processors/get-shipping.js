@@ -9,7 +9,7 @@ import logger from '../../lib/logger'
 
 export default (job, ctx, done) => ({
     jobName: 'get-shipping',
-    concurrency: 3,
+    concurrency: 1,
     processor: async (job, ctx, done) => {
         let browser, result;
         try {
