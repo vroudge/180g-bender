@@ -20,7 +20,7 @@ export default class Juno {
             const {variants, bro} = this;
             this.page = await bro.newPage();
 
-            await this.page.setRequestInterceptionEnabled(true);
+            await this.page.setRequestInterception(true);
             this.page.on('request', request => {
                 const intercepted = ['image', 'font'];
 
