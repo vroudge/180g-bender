@@ -1,5 +1,3 @@
-import kek from 'puppeteer/node6/ElementHandle'
-
 import puppeteer from 'puppeteer';
 
 import _ from 'lodash';

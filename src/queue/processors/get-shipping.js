@@ -1,4 +1,3 @@
-import kek from 'puppeteer/node6/ElementHandle'
 
 import puppeteer from 'puppeteer';
 
