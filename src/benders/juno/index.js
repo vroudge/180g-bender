@@ -14,6 +14,7 @@ export default class Juno {
     }
 
     async start({checkout}) {
+        const things = [];
         try {
 
             const {variants, bro} = this;
@@ -31,7 +32,7 @@ export default class Juno {
             });
 
             logger.nfo('Begin juno bender', this.variants);
-
+            things.push('Starting');
             for (const [value, index] of variants.entries()) {
                 await this.page.goto(index.shopId);
 
@@ -53,14 +54,21 @@ export default class Juno {
                     }
                 }
             }
+            things.push('Done with availability');
             await this.page.goto('https://www.juno.co.uk/cart/');
+            things.push('Done going to cart');
             await this.page.waitForSelector(`select.delivery_country`);
+            things.push('Done waiting for delivery country');
             await this.page.select('select.delivery_country', countryCodes[this.destinationAddress.country]);
+            things.push('Selected delivery country');
             await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
+            things.push('Clicked button 1');
             await this.page.waitForSelector(`#shipping_val`);
+            things.push('Done waiting for selector shipping val');
             const shippingPrice = await this.page.evaluate(() => {
                 return document.querySelector(`#shipping_val`).textContent.replace('€', '');
             });
+            things.push('Done calculating shipping price');
 
             if (checkout) {
                 await this.login();
@@ -80,7 +88,7 @@ export default class Juno {
                 };
             }
         } catch (e) {
-            logger.err('Error in Juno bender', {stack: e.stack, message: e.message});
+            logger.err('Error in Juno bender', {stack: e.stack, message: e.message, things});
             return Promise.reject(new Error(e));
         }
     }
