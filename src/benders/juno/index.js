@@ -80,7 +80,7 @@ export default class Juno {
                 };
             }
         } catch (e) {
-            logger.error('Error in Juno bender', {stack: e.stack, message: e.message});
+            logger.err('Error in Juno bender', {stack: e.stack, message: e.message});
             return Promise.reject(new Error(e));
         }
     }

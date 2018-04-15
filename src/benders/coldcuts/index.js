@@ -86,7 +86,7 @@ export default class emile {
                 };
             }
         } catch (e) {
-            logger.error('Error in colducts bender', {things})
+            logger.err('Error in colducts bender', {things});
             throw e;
         }
     }

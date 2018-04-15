@@ -84,7 +84,7 @@ export default class Hardwax {
                 };
             }
         } catch (e) {
-            logger.error('Error in Hardwax bender', {stack: e.stack, message: e.message});
+            logger.err('Error in Hardwax bender', {stack: e.stack, message: e.message});
             return Promise.reject(new Error(e));
         }
     }
