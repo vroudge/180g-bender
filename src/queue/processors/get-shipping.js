@@ -48,7 +48,6 @@ export default (job, ctx, done) => ({
                 browser = await puppeteer.launch({
                     headless: true,
                     ignoreHTTPSErrors: true,
-                    executablePath: '/usr/bin/chromium-browser',
                     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
                 });
             } else {
