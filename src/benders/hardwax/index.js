@@ -52,10 +52,6 @@ export default class Hardwax {
             await this.page.click(`#submit`);
             await this.page.waitForSelector(`#id_send_order`);
 
-            //wait for stripe iframe to be loaded
-            await this.page.waitForSelector(`#id_card_element > div > iframe`);
-            const frameName = `__privateStripeFrame3`;
-            const frame = await this.waitForFrame(this.page, frameName);
             await this.page.waitForSelector(`#id_shipping_option`);
 
             const shippingPrice = await this.page.evaluate(() => {
@@ -66,6 +62,11 @@ export default class Hardwax {
             logger.nfo('End hardwax bender', this.variants);
 
             if (checkout) {
+                //wait for stripe iframe to be loaded
+                await this.page.waitForSelector(`#id_card_element > div > iframe`);
+                const frameName = `__privateStripeFrame3`;
+                const frame = await this.waitForFrame(this.page, frameName);
+
                 await Hardwax.fillPaymentInfo(frame);
                 //if (process.env.NODE_ENV === 'production') {
                 await this.page.click(`#id_accept`);
