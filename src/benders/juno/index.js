@@ -14,68 +14,74 @@ export default class Juno {
     }
 
     async start({checkout}) {
-        const {variants, bro} = this;
-        this.page = await bro.newPage();
+        try {
 
-        await this.page.setRequestInterceptionEnabled(true);
-        this.page.on('request', request => {
-            const intercepted = ['image', 'font'];
+            const {variants, bro} = this;
+            this.page = await bro.newPage();
 
-            if (intercepted.includes(request.resourceType)) {
-                request.abort();
-            } else {
-                request.continue();
-            }
-        });
+            await this.page.setRequestInterceptionEnabled(true);
+            this.page.on('request', request => {
+                const intercepted = ['image', 'font'];
 
-        logger.nfo('Begin juno bender', this.variants);
-
-        for (const [value, index] of variants.entries()) {
-            await this.page.goto(index.shopId);
-
-            const itemIsAvailable = await this.page.evaluate(() => {
-                return document.querySelectorAll('a.btn.btn-cta.btn-prod-alert.mb-2').length === 0;
+                if (intercepted.includes(request.resourceType)) {
+                    request.abort();
+                } else {
+                    request.continue();
+                }
             });
 
-            this.variants[value].available = itemIsAvailable;
+            logger.nfo('Begin juno bender', this.variants);
 
-            if (itemIsAvailable) {
-                await this.page.click('.btn.btn-cta.mb-2.ml-2');
-                await this.page.waitFor(1500);
-            } else {
-                const allUnavailable = _.filter(variants, 'available').length === 0;
-                const endOfArray = value + 1 === variants.length;
+            for (const [value, index] of variants.entries()) {
+                await this.page.goto(index.shopId);
 
-                if (endOfArray && allUnavailable) {
-                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+                const itemIsAvailable = await this.page.evaluate(() => {
+                    return document.querySelectorAll('a.btn.btn-cta.btn-prod-alert.mb-2').length === 0;
+                });
+
+                this.variants[value].available = itemIsAvailable;
+
+                if (itemIsAvailable) {
+                    await this.page.click('.btn.btn-cta.mb-2.ml-2');
+                    await this.page.waitFor(1500);
+                } else {
+                    const allUnavailable = _.filter(variants, 'available').length === 0;
+                    const endOfArray = value + 1 === variants.length;
+
+                    if (endOfArray && allUnavailable) {
+                        return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+                    }
                 }
             }
-        }
-        await this.page.goto('https://www.juno.co.uk/cart/');
-        await this.page.waitForSelector(`select.delivery_country`);
-        await this.page.select('select.delivery_country', countryCodes[this.destinationAddress.country]);
-        await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
-        await this.page.waitForSelector(`#shipping_val`);
-        const shippingPrice = await this.page.evaluate(() => {
-            return document.querySelectorAll(`#shipping_val`)[0].textContent.replace('€', '');
-        });
+            await this.page.goto('https://www.juno.co.uk/cart/');
+            await this.page.waitForSelector(`select.delivery_country`);
+            await this.page.select('select.delivery_country', countryCodes[this.destinationAddress.country]);
+            await this.page.click('#cart_table_container > form:nth-child(3) > div > div:nth-child(2) > div > input');
+            await this.page.waitForSelector(`#shipping_val`);
+            const shippingPrice = await this.page.evaluate(() => {
+                return document.querySelector(`#shipping_val`).textContent.replace('€', '');
+            });
 
-        if (checkout) {
-            await this.login();
-            await this.fillShippingInfo();
+            if (checkout) {
+                await this.login();
+                await this.fillShippingInfo();
 
-            if (process.env.NODE_ENV === 'production') {
-                await this.page.click(`#co_submit_1`);
+                if (process.env.NODE_ENV === 'production') {
+                    await this.page.click(`#co_submit_1`);
+                }
+                return {type: 'checkout', value: 'success'}
+            } else {
+                logger.nfo('End juno bender', this.variants);
+                return {
+                    type: 'shipping',
+                    retailerId: this.retailerId,
+                    shipping: {price: shippingPrice, currency: 'eur'},
+                    variants
+                };
             }
-            return {type: 'checkout', value: 'success'}
-        } else {
-            logger.nfo('End juno bender', this.variants);
-            return {
-                type: 'shipping',
-                retailerId: this.retailerId,
-                shipping: {price: shippingPrice, currency: 'eur'},
-                variants
-            };
+        } catch (e) {
+            logger.error('Error in Juno bender', {stack: e.stack, message: e.message});
+            return Promise.reject(new Error(e));
         }
     }
 

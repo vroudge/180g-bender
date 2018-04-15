@@ -56,8 +56,10 @@ export default class sideone {
         logger.nfo('End Sideone bender', this.variants);
 
         if (checkout) {
+            await this.page.close();
             return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
         } else {
+            await this.page.close();
             return {
                 type: 'shipping',
                 retailerId: this.retailerId,

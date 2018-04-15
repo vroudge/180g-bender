@@ -66,10 +66,12 @@ export default class emile {
             await this.page.waitFor(4000);
             await this.fillShippingInfos();
             await this.page.waitFor(8000);
+            await this.page.close();
             return {type: 'checkout', value: 'success'};
         } else {
             const shippingPrice = await this.getShippingPrice();
             logger.nfo('End Emile bender', this.variants);
+            await this.page.close();
             return {
                 type: 'shipping',
                 retailerId: this.retailerId,

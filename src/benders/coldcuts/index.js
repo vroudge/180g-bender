@@ -74,8 +74,10 @@ export default class emile {
                 }
 
                 await this.page.waitFor(8000);
+                await this.page.close();
                 return {type: 'checkout', value: 'success'}
             } else {
+                await this.page.close();
                 return {
                     type: 'shipping',
                     retailerId: this.retailerId,

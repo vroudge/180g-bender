@@ -13,9 +13,9 @@ export default (job, ctx, done) => ({
     processor: async (job, ctx, done) => {
         let browser, result;
         try {
-            const {retailers, cart, destinationAddress} = job.data;
+            const {retailers, cart, destinationAddress, jobId} = job.data;
             const orderRaw = cart.content.vinyls;
-            logger.nfo('Querying shipping data in retailers', job.data.cart);
+            logger.nfo(' 1 - Querying shipping data in retailers', job.data.cart);
             //cleanup cart object for use
             const order = _.map(orderRaw, (elem, key) => {
                 const retailerForVariant = _.find(retailers, retailer => retailer.id === elem.retailerId).name;
@@ -30,7 +30,7 @@ export default (job, ctx, done) => ({
                 return elem;
             });
 
-            logger.nfo('Clean order', order);
+            logger.nfo('2 - Clean order', order);
             const variants = _.reduce(order, (acc, elem) => {
                 const {variantId, shopId} = elem;
 
@@ -60,7 +60,7 @@ export default (job, ctx, done) => ({
                 });
             }
 
-            logger.nfo('Browser takeoff', !!browser);
+            logger.nfo(' 3 - Browser takeoff', !!browser);
             result = await Promise.all(
                 _.map(variants, async (elem, key) => {
                     return (await new Benders[key](browser, {
@@ -70,10 +70,11 @@ export default (job, ctx, done) => ({
                     })).start({checkout: false});
                 })
             );
+            logger.nfo(' 4 - Bender done');
             await browser.close();
         } catch (e) {
             if (browser) await browser.close();
-            logger.err(`Error in get-shipping`, {...e, stack: e.stack});
+            logger.err(`4 - Error in get-shipping`, {...e, stack: e.stack});
             return done(e);
         }
         return done(null, JSON.stringify(result));
