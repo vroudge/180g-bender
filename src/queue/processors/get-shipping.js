@@ -48,7 +48,7 @@ export default (job, ctx, done) => ({
                 browser = await puppeteer.launch({
                     headless: true,
                     ignoreHTTPSErrors: true,
-                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
                 });
             } else {
                 browser = await puppeteer.launch({
