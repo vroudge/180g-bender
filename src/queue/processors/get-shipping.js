@@ -54,7 +54,7 @@ export default (job, ctx, done) => ({
                 browser = await puppeteer.launch({
                     headless: false,
                     ignoreHTTPSErrors: true,
-                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+                    args: ['--user-data-dir','--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
                 });
             }
 
