@@ -45,7 +45,6 @@ export default (job, ctx, done) => ({
             }, {});
             const idGen = new shortUid().randomUUID();
             const userDataFlag = `/tmp/pup-${idGen}`;
-            console.log('userdataflag start', userDataFlag);
 
             if (process.env.NODE_ENV === 'production') {
                 browser = await puppeteer.launch({
@@ -75,7 +74,6 @@ export default (job, ctx, done) => ({
 
             await new Promise(function(resolve, reject){
                 rimraf(userDataFlag, (err, res)=>{
-                    console.log(err, res);
                     if(err) reject(err);
                     return resolve();
                 });
