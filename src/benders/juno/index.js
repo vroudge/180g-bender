@@ -42,6 +42,7 @@ export default class Juno {
             const shippingPrice = await this.page.evaluate(() => {
                 return document.querySelector(`#shipping_val`).textContent.replace('€', '');
             });
+
             things.push('Done calculating shipping price');
 
             if (checkout) {
