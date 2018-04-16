@@ -1,7 +1,7 @@
-
 import puppeteer from 'puppeteer';
-
+import shortUid from 'short-uid';
 import _ from 'lodash';
+import rimraf from 'rimraf';
 
 import * as Benders from '../../benders'
 import logger from '../../lib/logger'
@@ -43,18 +43,21 @@ export default (job, ctx, done) => ({
 
                 return acc;
             }, {});
+            const idGen = new shortUid().randomUUID();
+            const userDataFlag = `/tmp/pup-${idGen}`;
+            console.log('userdataflag start', userDataFlag);
 
             if (process.env.NODE_ENV === 'production') {
                 browser = await puppeteer.launch({
                     headless: true,
                     ignoreHTTPSErrors: true,
-                    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
+                    args: [`--user-data-dir=${userDataFlag}`, '--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
                 });
             } else {
                 browser = await puppeteer.launch({
                     headless: false,
                     ignoreHTTPSErrors: true,
-                    args: ['--user-data-dir','--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+                    args: [`--user-data-dir=${userDataFlag}`, '--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
                 });
             }
 
@@ -69,6 +72,15 @@ export default (job, ctx, done) => ({
                 })
             );
             logger.nfo(' 4 - Bender done');
+
+            await new Promise(function(resolve, reject){
+                rimraf(userDataFlag, (err, res)=>{
+                    console.log(err, res);
+                    if(err) reject(err);
+                    return resolve();
+                });
+            });
+            logger.nfo(` 5 - Done cleanup`);
             await browser.close();
         } catch (e) {
             if (browser) await browser.close();

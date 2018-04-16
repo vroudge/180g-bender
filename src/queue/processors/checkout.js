@@ -13,7 +13,7 @@ export default (job, ctx, done) => ({
         try {
             const {retailers, cart, destinationAddress} = job.data;
             const orderRaw = cart.content.vinyls;
-            logger.nfo('Querying shipping data in retailers', job.data.cart);
+            logger.nfo('Querying shipping data in retailers', job.data.cart.content);
             //cleanup cart object for use
             const order = _.map(orderRaw, (elem, key) => {
                 const retailerForVariant = _.find(retailers, retailer => retailer.id === elem.retailerId).name;
