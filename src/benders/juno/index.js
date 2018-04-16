@@ -16,44 +16,18 @@ export default class Juno {
     async start({checkout}) {
         const things = [];
         try {
-
-            const {variants, bro} = this;
-            this.page = await bro.newPage();
-
-            await this.page.setRequestInterception(true);
-            this.page.on('request', request => {
-                const intercepted = ['image', 'font'];
-
-                if (intercepted.includes(request.resourceType)) {
-                    request.abort();
-                } else {
-                    request.continue();
-                }
-            });
+            const {variants} = this;
 
             logger.nfo('Begin juno bender', this.variants);
             things.push('Starting');
-            for (const [value, index] of variants.entries()) {
-                await this.page.goto(index.shopId);
 
-                const itemIsAvailable = await this.page.evaluate(() => {
-                    return document.querySelectorAll('a.btn.btn-cta.btn-prod-alert.mb-2').length === 0;
-                });
+            const allUnavailable = _.compact(await Promise.all(
+                _.map(variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+            ));
 
-                this.variants[value].available = itemIsAvailable;
+            if(allUnavailable.length) return allUnavailable;
 
-                if (itemIsAvailable) {
-                    await this.page.click('.btn.btn-cta.mb-2.ml-2');
-                    await this.page.waitFor(1500);
-                } else {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
-
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'all-unavailable', retailerId: this.retailerId, variants};
-                    }
-                }
-            }
+            this.page = await this.bro.newPage();
             things.push('Done with availability');
             await this.page.goto('https://www.juno.co.uk/cart/');
             things.push('Done going to cart');
@@ -91,6 +65,43 @@ export default class Juno {
             logger.err('Error in Juno bender', {stack: e.stack, message: e.message, things});
             return Promise.reject(new Error(e));
         }
+    }
+
+    async createPageAndAddToCart(variantIndex, variant) {
+        const page = await this.bro.newPage();
+
+        page.setRequestInterception(true);
+        page.on('request', request => {
+            const intercepted = ['image', 'font', 'gif', 'jpeg', 'png'];
+
+            if (intercepted.includes(request.resourceType)) {
+                request.abort();
+            } else {
+                request.continue();
+            }
+        });
+        await page.goto(variant.shopId);
+
+        const itemIsAvailable = await page.evaluate(() => {
+            return document.querySelectorAll('a.btn.btn-cta.btn-prod-alert.mb-2').length === 0;
+        });
+
+        this.variants[variantIndex].available = itemIsAvailable;
+        console.log(this.variants);
+
+        if (itemIsAvailable) {
+            await page.click('.btn.btn-cta.mb-2.ml-2');
+            await page.waitFor(1500);
+            return null;
+        } else {
+            const allUnavailable = _.filter(variants, 'available').length === 0;
+            const endOfArray = variantIndex === this.variants.length;
+
+            if (endOfArray && allUnavailable) {
+                return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+            }
+        }
+        return null;
     }
 
     async login() {
