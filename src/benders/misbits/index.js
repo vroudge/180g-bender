@@ -1,5 +1,6 @@
 import config from '../../config';
 import _ from 'lodash';
+import logger from "../../lib/logger";
 
 export default class misbits {
     constructor(browserInstance, {variants, retailerId, destinationAddress}) {
@@ -12,40 +13,18 @@ export default class misbits {
 
     async start({checkout}) {
         const {variants, bro} = this;
-        this.page = await bro.newPage();
 
-        await this.page.setRequestInterception(true);
-        this.page.on('request', request => {
-            const intercepted = ['image', 'font'];
+        logger.nfo('Begin misbits bender', this.variants);
 
-            if (intercepted.includes(request.resourceType)) {
-                request.abort();
-            } else {
-                request.continue();
-            }
-        });
+        const queriedVariants = await Promise.all(
+            _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+        );
 
-        for (const [value, index] of variants.entries()) {
-            await this.page.goto(index.shopId);
-
-            const itemIsAvailable = await this.page.evaluate(() => {
-                return document.querySelectorAll(`p.stock.in-stock`).length > 0;
-            });
-            this.variants[value].available = itemIsAvailable;
-
-            if (itemIsAvailable) {
-                await this.page.click('button.single_add_to_cart_button');
-                await this.page.waitForSelector(`#content > div.woo-wrapper > div > div > div.woocommerce-message`);
-            } else {
-                const allUnavailable = _.filter(variants, 'available').length === 0;
-                const endOfArray = value + 1 === variants.length;
-
-                if (endOfArray && allUnavailable) {
-                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
-                }
-            }
+        if (_.filter(this.variants, 'available').length === 0) {
+            return {type: 'all-unavailable', retailerId: this.retailerId, variants};
         }
 
+        this.page = await bro.newPage();
         await this.page.goto('https://www.misbits.ro/cart/');
         await this.page.waitForSelector(`a.shipping-calculator-button`);
         await this.page.click('a.shipping-calculator-button');
@@ -78,6 +57,7 @@ export default class misbits {
             return {type: 'checkout', value: 'success'}
         } else {
             await this.page.close();
+            logger.nfo('End misbits bender', this.variants);
             return {
                 type: 'shipping',
                 retailerId: this.retailerId,
@@ -85,6 +65,33 @@ export default class misbits {
                 variants
             };
         }
+    }
+
+    async createPageAndAddToCart(variantIndex, variant) {
+        const page = await this.bro.newPage();
+
+        page.setRequestInterception(true);
+        page.on('request', request => {
+            if (request.url().endsWith('.png') || request.url().endsWith('.jpg') || request.url().endsWith('.gif'))
+                request.abort();
+            else
+                request.continue();
+        });
+
+        await page.goto(variant.shopId);
+
+        const itemIsAvailable = await page.evaluate(() => {
+            return document.querySelectorAll(`p.stock.in-stock`).length > 0;
+        });
+        this.variants[variantIndex].available = itemIsAvailable;
+
+        if (itemIsAvailable) {
+            await page.click('button.single_add_to_cart_button');
+            await page.waitForSelector(`#content > div.woo-wrapper > div > div > div.woocommerce-message`);
+        }
+
+        await page.close();
+        return itemIsAvailable;
     }
 
     async login() {
