@@ -93,7 +93,7 @@ export default class Juno {
             await page.click('.btn.btn-cta.mb-2.ml-2');
             await page.waitFor(2000);
         }
-
+        await page.close();
         return itemIsAvailable;
     }
 

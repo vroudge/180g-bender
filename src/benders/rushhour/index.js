@@ -18,37 +18,27 @@ export default class Rushhour {
         try {
             const {variants, bro} = this;
             this.page = await bro.newPage();
+            logger.nfo('Begin Rushhour Bender', this.variants);
+
             logging.push('before login');
             await this.login();
             logging.push('after login');
-            logger.nfo('Begin Rushhour Bender', this.variants);
-            for (const [value, index] of variants.entries()) {
-                const id = index.shopId.split('item=')[1];
-                const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
-                logging.push('after add to cart');
-                await this.page.goto(addToCart);
-                logging.push('done going to addtocart');
-                const itemIsAvailable = await this.page.evaluate(() => {
-                    return !document.querySelector(`#message`).textContent.includes(`out of stock`);
-                });
-                logging.push('after item available');
-                this.variants[value].available = itemIsAvailable;
 
-                if (!itemIsAvailable) {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
+            const queriedVariants = await Promise.all(
+                _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+            );
 
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'all-unavailable', retailerId: this.retailerId, variants};
-                    }
-                }
+            if (_.filter(this.variants, 'available').length === 0) {
+                return {type: 'all-unavailable', retailerId: this.retailerId, variants};
             }
-            logging.push('before checkout');
+            await this.page.close();
+            this.page = await this.bro.newPage();
+
+            logging.push('before page checkout');
             await this.page.goto('http://www.rushhour.nl/rh_shoppingcart.php?action=checkout');
-            logging.push('after checkout');
+            logging.push('after page checkout');
             await this.fillShippingInfo();
             logging.push('after fill shipping');
-
             await this.page.waitForSelector(`#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input`);
             logging.push('first selector done');
             await this.page.click('#main-content > form:nth-child(4) > table > tbody > tr:nth-child(18) > td:nth-child(2) > input');
@@ -107,6 +97,28 @@ export default class Rushhour {
             logger.err('Error in rushhour bender', {error:e.message, stack:e.stack, data: logging});
             throw e;
         }
+    }
+    async createPageAndAddToCart(variantIndex, variant) {
+        const page = await this.bro.newPage();
+
+        page.setRequestInterception(true);
+        page.on('request', request => {
+            if (request.url().endsWith('.png') || request.url().endsWith('.jpg') || request.url().endsWith('.gif'))
+                request.abort();
+            else
+                request.continue();
+        });
+
+        const id = variant.shopId.split('item=')[1];
+        const addToCart = `http://www.rushhour.nl/store_detailed.php?action=add&item=${id}`;
+        await page.goto(addToCart);
+        const itemIsAvailable = await page.evaluate(() => {
+            return !document.querySelector(`#message`).textContent.includes(`out of stock`);
+        });
+
+        this.variants[variantIndex].available = itemIsAvailable;
+        await page.close();
+        return itemIsAvailable;
     }
 
     async login() {
