@@ -15,43 +15,29 @@ export default class emile {
 
     async start({checkout}) {
         const {variants, bro} = this;
-        this.page = await bro.newPage();
-        await this.page.setRequestInterception(true);
-        this.page.on('request', request => {
-            const intercepted = ['image', 'font'];
 
-            if (intercepted.includes(request.resourceType)) {
-                request.abort();
-            } else {
-                request.continue();
-            }
-        });
 
         logger.nfo('Begin Emile bender', this.variants);
 
-        for (const [value, index] of variants.entries()) {
-            await this.page.goto(index.shopId);
-            await this.page.waitForSelector(`a.btn.btn-default.button.addToBasket`);
+        const queriedVariants = await Promise.all(
+            _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+        );
 
-            const itemIsAvailable = await this.page.evaluate(() => {
-                return !document.querySelector('a.addToBasket').textContent.includes(`Out of stock`);
-            });
-
-            this.variants[value].available = itemIsAvailable;
-
-            if (itemIsAvailable) {
-                await this.page.click(`a.btn.btn-default.button.addToBasket`);
-                await this.page.waitFor(1000);
-
-            } else {
-                const allUnavailable = _.filter(variants, 'available').length === 0;
-                const endOfArray = value + 1 === variants.length;
-
-                if (endOfArray && allUnavailable) {
-                    return {type: 'all-unavailable', retailerId: this.retailerId, variants}
-                }
-            }
+        if (_.filter(this.variants, 'available').length === 0) {
+            return {type: 'all-unavailable', retailerId: this.retailerId, variants};
         }
+
+
+        this.page = await bro.newPage();
+        this.page.setRequestInterception(true);
+        this.page.on('request', request => {
+            if (request.url().endsWith('.png')
+                || request.url().endsWith('.jpg')
+                || request.url().endsWith('.gif'))
+                request.abort();
+            else
+                request.continue();
+        });
 
         await this.page.goto(`https://chezemile-records.com/home`);
         await this.page.waitFor(2000);
@@ -81,6 +67,37 @@ export default class emile {
         }
     }
 
+    async createPageAndAddToCart(variantIndex, variant) {
+        const page = await this.bro.newPage();
+
+        page.setRequestInterception(true);
+        page.on('request', request => {
+            if (request.url().endsWith('.png')
+                || request.url().endsWith('.jpg')
+                || request.url().endsWith('.gif'))
+                request.abort();
+            else
+                request.continue();
+        });
+
+        await page.goto(variant.shopId);
+        await page.waitForSelector(`a.btn.btn-default.button.addToBasket`);
+
+        const itemIsAvailable = await page.evaluate(() => {
+            return !document.querySelector('a.addToBasket').textContent.includes(`Out of stock`);
+        });
+
+        this.variants[variantIndex].available = itemIsAvailable;
+
+        if (itemIsAvailable) {
+            await page.click(`a.btn.btn-default.button.addToBasket`);
+            await page.waitFor(1500);
+        }
+
+        await page.close();
+        return itemIsAvailable;
+    }
+
     async getShippingPrice() {
         await this.page.waitFor(`#basketView > div:nth-child(3) > div.col-xs-9 > div > p:nth-child(2)`);
         const shippingPrice = await this.page.evaluate(() => {
@@ -89,7 +106,7 @@ export default class emile {
 
         try {
             const patternShipping = /[+-]?\d+(\.\d+)?/g;
-            const cleanString = shippingPrice.replace('(', '').replace(')','').match(patternShipping)[0];
+            const cleanString = shippingPrice.replace('(', '').replace(')', '').match(patternShipping)[0];
 
             if (!_.isNaN(parseFloat(cleanString))) {
                 return cleanString;
