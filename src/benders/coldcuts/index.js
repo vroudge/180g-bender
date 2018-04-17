@@ -110,7 +110,7 @@ export default class emile {
             });
             await page.waitFor(1000);
         }
-
+        await page.close();
         return itemIsAvailable;
     }
 
