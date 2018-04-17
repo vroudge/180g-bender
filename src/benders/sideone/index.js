@@ -13,29 +13,20 @@ export default class sideone {
     }
 
     async start({checkout}) {
+        try {
         const {variants, bro} = this;
-        this.page = await bro.newPage();
         logger.nfo('Begin Sideone bender', this.variants);
-        for (const [value, index] of variants.entries()) {
 
-            await this.page.goto(index.shopId);
-            const itemIsAvailable = await this.page.evaluate(() => {
-                return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
-            });
-            this.variants[value].available = itemIsAvailable;
-            if (!itemIsAvailable) {
-                const allUnavailable = _.filter(variants, 'available').length === 0;
+        const queriedVariants = await Promise.all(
+            _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+        );
 
-                const endOfArray = value + 1 === variants.length;
-                if (endOfArray && allUnavailable) {
-                    return {type: 'all-unavailable', retailerId: this.retailerId, variants};
-                }
-            } else {
-                await this.page.click(`#projector_button_basket`);
-            }
+        if (_.filter(this.variants, 'available').length === 0) {
+            return {type: 'all-unavailable', retailerId: this.retailerId, variants};
         }
 
-        await this.page.waitFor(5000);
+        this.page = await this.bro.newPage();
+        await this.page.waitFor(1000);
         await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
         await this.page.waitForSelector(`#basket_go_next`);
         await this.page.click(`#basket_go_next`);
@@ -45,10 +36,11 @@ export default class sideone {
         await this.page.click(`#deliver_to_billingaddr`);
         await this.fillShippingInfo();
         await this.page.waitFor(5000);
-        await this.page.screenshot({path: 'example.png', fullPage: true});
         await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
         await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
         await this.page.waitFor(1500);
+        console.log('passhere');
+
         const shippingPrice = await this.page.evaluate(() => {
             return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
         });
@@ -67,6 +59,35 @@ export default class sideone {
                 variants
             };
         }
+        } catch(e) {
+            logger.err('Bender - Error in Sideone bender', {...e});
+        }
+    }
+
+    async createPageAndAddToCart(variantIndex, variant) {
+        const page = await this.bro.newPage();
+
+        page.setRequestInterception(true);
+        page.on('request', request => {
+            if (request.url().endsWith('.png') || request.url().endsWith('.jpg') || request.url().endsWith('.gif'))
+                request.abort();
+            else
+                request.continue();
+        });
+
+        await page.goto(variant.shopId);
+
+        const itemIsAvailable = await page.evaluate(() => {
+            return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
+        });
+
+        this.variants[variantIndex].available = itemIsAvailable;
+
+        if (itemIsAvailable) {
+            await page.click(`#projector_button_basket`);
+        }
+        await page.close();
+        return itemIsAvailable;
     }
 
     async removeOneElementFromBasket() {
