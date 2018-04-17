@@ -29,7 +29,6 @@ export default class Juno {
 
             this.page = await this.bro.newPage();
 
-
             things.push('Done with availability');
             await this.page.goto('https://www.juno.co.uk/cart/');
             things.push('Done going to cart');

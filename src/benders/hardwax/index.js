@@ -16,37 +16,17 @@ export default class Hardwax {
         try {
             const {variants, bro} = this;
             logger.nfo('Begin hardwax bender', this.variants);
-            this.page = await bro.newPage();
 
-            await this.page.setRequestInterception(true);
-            this.page.on('request', request => {
-                const intercepted = ['image', 'font'];
+            const queriedVariants = await Promise.all(
+                _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+            );
 
-                if (intercepted.includes(request.resourceType)) {
-                    request.abort();
-                } else {
-                    request.continue();
-                }
-            });
-
-            for (const [value, index] of variants.entries()) {
-                await this.page.goto(index.shopId);
-                const itemIsAvailable = await this.page.evaluate(() => {
-                    return !document.querySelector(`div.add_order.fright`).textContent.includes(`out of stock`);
-                });
-
-                this.variants[value].available = itemIsAvailable;
-
-                await this.page.click(`div.add_order.fright`);
-                if (!itemIsAvailable) {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
-
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'all-unavailable', retailerId: this.retailerId, variants}
-                    }
-                }
+            if (_.filter(this.variants, 'available').length === 0) {
+                return {type: 'all-unavailable', retailerId: this.retailerId, variants};
             }
+
+
+            this.page = await bro.newPage();
             await this.page.goto(`https://hardwax.com/basket/my-details/`);
             await this.fillShippingInfo();
             await this.page.click(`#submit`);
@@ -88,6 +68,35 @@ export default class Hardwax {
             logger.err('Error in Hardwax bender', {stack: e.stack, message: e.message});
             return Promise.reject(new Error(e));
         }
+    }
+
+    async createPageAndAddToCart(variantIndex, variant) {
+        const page = await this.bro.newPage();
+
+        page.setRequestInterception(true);
+        page.on('request', request => {
+            if (request.url().endsWith('.png')
+                || request.url().endsWith('.jpg')
+                || request.url().endsWith('.gif'))
+                request.abort();
+            else
+                request.continue();
+        });
+
+        await page.goto(variant.shopId);
+        const itemIsAvailable = await page.evaluate(() => {
+            return !document.querySelector(`div.add_order.fright`).textContent.includes(`out of stock`);
+        });
+
+        this.variants[variantIndex].available = itemIsAvailable;
+
+        if (itemIsAvailable) {
+            await page.click(`div.add_order.fright`);
+            await page.waitFor(1000);
+        }
+
+        await page.close();
+        return itemIsAvailable;
     }
 
     async fillShippingInfo() {
