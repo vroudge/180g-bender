@@ -17,8 +17,8 @@ export default class Juno {
         const things = [];
         try {
             logger.nfo('Begin juno bender', this.variants);
-            things.push('Starting');
 
+            things.push('Starting');
             const queriedVariants = await Promise.all(
                 _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
             );
