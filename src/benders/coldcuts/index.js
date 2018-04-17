@@ -15,31 +15,19 @@ export default class emile {
         let things = [];
         try {
             const {variants, bro} = this;
-            this.page = await bro.newPage();
             logger.nfo('Begin coldcuts bender', this.variants);
 
-            for (const [value, index] of variants.entries()) {
-                await this.page.goto(index.shopId);
-                await this.page.waitFor(1500);
-                const itemIsAvailable = await this.page.evaluate(() => {
-                    return document.querySelectorAll('#add-to-cart').length !== 0;
-                });
-                this.variants[value].available = itemIsAvailable;
+            const queriedVariants = await Promise.all(
+                _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+            );
 
-                if (itemIsAvailable) {
-                    await this.page.evaluate(() => {
-                        document.querySelector(`#add-to-cart`).click();
-                    });
-                    await this.page.waitFor(1000);
-                } else {
-                    const allUnavailable = _.filter(variants, 'available').length === 0;
-                    const endOfArray = value + 1 === variants.length;
+            const allUnavailable = _.filter(this.variants, 'available').length === 0;
 
-                    if (endOfArray && allUnavailable) {
-                        return {type: 'all-unavailable', retailerId: this.retailerId, variants}
-                    }
-                }
+            if (allUnavailable) {
+                return {type: 'all-unavailable', retailerId: this.retailerId, variants};
             }
+            this.page = await this.bro.newPage();
+            await this.page.waitFor(1000);
             things.push('Done availability');
             await this.page.goto(`https://www.coldcutshotwax.uk/checkout`);
             things.push('Done gotocheckout');
@@ -89,6 +77,41 @@ export default class emile {
             logger.err('Error in colducts bender', {things});
             throw e;
         }
+    }
+
+    async createPageAndAddToCart(variantIndex, variant) {
+        const page = await this.bro.newPage();
+
+        page.setRequestInterception(true);
+        page.on('request', request => {
+            if (request.url().includes('.png')
+                || request.url().includes('.jpg')
+                || request.url().includes('.gif')
+                || request.url().includes('.woff')
+                || request.url().includes('twitter')
+                || request.url().includes('facebook')
+                || request.url().includes('beeketing'))
+                request.abort();
+            else
+                request.continue();
+        });
+        await page.goto(variant.shopId);
+
+        await page.waitFor(1000);
+        const itemIsAvailable = await page.evaluate(() => {
+            return document.querySelectorAll('#add-to-cart').length !== 0;
+        });
+
+        this.variants[variantIndex].available = itemIsAvailable;
+
+        if (itemIsAvailable) {
+            await page.evaluate(() => {
+                document.querySelector(`#add-to-cart`).click();
+            });
+            await page.waitFor(1000);
+        }
+
+        return itemIsAvailable;
     }
 
     async getAllPaymentFields() {
