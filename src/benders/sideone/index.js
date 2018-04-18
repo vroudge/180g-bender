@@ -59,7 +59,7 @@ export default class sideone {
                     variants
                 };
             }
-        } catch (e) {
+        } catch (error) {
             logger.err('Bender - Error in Sideone bender', {message: error.message, stack: error.stack});
         }
     }
