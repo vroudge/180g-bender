@@ -14,53 +14,53 @@ export default class sideone {
 
     async start({checkout}) {
         try {
-        const {variants, bro} = this;
-        logger.nfo('Begin Sideone bender', this.variants);
+            const {variants, bro} = this;
+            logger.nfo('Begin Sideone bender', this.variants);
 
-        const queriedVariants = await Promise.all(
-            _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
-        );
+            const queriedVariants = await Promise.all(
+                _.map(this.variants, (variant, variantId) => this.createPageAndAddToCart(variantId, variant))
+            );
 
-        if (_.filter(this.variants, 'available').length === 0) {
-            return {type: 'all-unavailable', retailerId: this.retailerId, variants};
-        }
+            if (_.filter(this.variants, 'available').length === 0) {
+                return {type: 'all-unavailable', retailerId: this.retailerId, variants};
+            }
 
-        this.page = await this.bro.newPage();
-        await this.page.waitFor(1000);
-        await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
-        await this.page.waitForSelector(`#basket_go_next`);
-        await this.page.click(`#basket_go_next`);
-        await this.page.waitForSelector(`#signin-form_box_left > div > a.btn.signin-form_once`);
-        await this.page.click(`#signin-form_box_left > div > a.btn.signin-form_once`);
-        await this.page.waitForSelector(`#deliver_to_billingaddr`);
-        await this.page.click(`#deliver_to_billingaddr`);
-        await this.fillShippingInfo();
-        await this.page.waitFor(5000);
-        await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-        await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-        await this.page.waitFor(1500);
-        console.log('passhere');
+            this.page = await this.bro.newPage();
+            await this.page.waitFor(1000);
+            await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
+            await this.page.waitForSelector(`#basket_go_next`);
+            await this.page.click(`#basket_go_next`);
+            await this.page.waitForSelector(`#signin-form_box_left > div > a.btn.signin-form_once`);
+            await this.page.click(`#signin-form_box_left > div > a.btn.signin-form_once`);
+            await this.page.waitForSelector(`#deliver_to_billingaddr`);
+            await this.page.click(`#deliver_to_billingaddr`);
+            await this.fillShippingInfo();
+            await this.page.waitFor(5000);
+            await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
+            await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
+            await this.page.waitFor(1500);
+            console.log('passhere');
 
-        const shippingPrice = await this.page.evaluate(() => {
-            return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
-        });
+            const shippingPrice = await this.page.evaluate(() => {
+                return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
+            });
 
-        logger.nfo('End Sideone bender', this.variants);
+            logger.nfo('End Sideone bender', this.variants);
 
-        if (checkout) {
-            await this.page.close();
-            return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
-        } else {
-            await this.page.close();
-            return {
-                type: 'shipping',
-                retailerId: this.retailerId,
-                shipping: {price: shippingPrice, currency: 'pln'},
-                variants
-            };
-        }
-        } catch(e) {
-            logger.err('Bender - Error in Sideone bender', {...e});
+            if (checkout) {
+                await this.page.close();
+                return {type: 'checkout', retailerId: this.retailerId, value: 'success'};
+            } else {
+                await this.page.close();
+                return {
+                    type: 'shipping',
+                    retailerId: this.retailerId,
+                    shipping: {price: shippingPrice, currency: 'pln'},
+                    variants
+                };
+            }
+        } catch (e) {
+            logger.err('Bender - Error in Sideone bender', {message: error.message, stack: error.stack});
         }
     }
 
