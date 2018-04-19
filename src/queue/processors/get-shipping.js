@@ -43,20 +43,43 @@ export default (job, ctx, done) => ({
 
                 return acc;
             }, {});
+
             const idGen = new shortUid().randomUUID();
             const userDataFlag = `/tmp/pup-${idGen}`;
 
             if (process.env.NODE_ENV === 'production') {
+                const prodArgs = [`--user-data-dir=${userDataFlag}`,
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu',
+                    '--disable-dev-shm-usage',
+                    '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+                ];
+                //use proxy for sideone
+                if (variants['sideone']) {
+                    prodArgs.push(`--proxy-server=34.249.225.224:27631`)
+                }
+
                 browser = await puppeteer.launch({
                     headless: true,
                     ignoreHTTPSErrors: true,
-                    args: [`--user-data-dir=${userDataFlag}`, '--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu', '--disable-dev-shm-usage']
+                    args: prodArgs
                 });
             } else {
+                const devArgs = [`--user-data-dir=${userDataFlag}`,
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu',
+                    '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+                ];
+                //use proxy for sideone
+                if (variants['sideone']) {
+                    devArgs.push(`--proxy-server=34.249.225.224:27631`)
+                }
                 browser = await puppeteer.launch({
-                    headless: false,
+                    headless: true,
                     ignoreHTTPSErrors: true,
-                    args: [`--user-data-dir=${userDataFlag}`, '--no-sandbox', '--disable-setuid-sandbox', '--disable-gpu']
+                    args: devArgs
                 });
             }
 
@@ -72,9 +95,9 @@ export default (job, ctx, done) => ({
             );
             logger.nfo(' 4 - Bender done');
 
-            await new Promise(function(resolve, reject){
-                rimraf(userDataFlag, (err, res)=>{
-                    if(err) reject(err);
+            await new Promise(function (resolve, reject) {
+                rimraf(userDataFlag, (err, res) => {
+                    if (err) reject(err);
                     return resolve();
                 });
             });

@@ -26,6 +26,17 @@ export default class sideone {
             }
 
             this.page = await this.bro.newPage();
+            this.page.setRequestInterception(true);
+            this.page.on('request', request => {
+                if (request.url().includes('.png')
+                    || request.url().includes('.jpg')
+                    || request.url().includes('.gif')
+                    || request.url().includes('facebook')
+                )
+                    request.abort();
+                else
+                    request.continue();
+            });
             await this.page.waitFor(1000);
             await this.page.goto(`https://www.sideone.pl/basketedit.php?mode=1`);
             await this.page.waitForSelector(`#basket_go_next`);
@@ -35,11 +46,10 @@ export default class sideone {
             await this.page.waitForSelector(`#deliver_to_billingaddr`);
             await this.page.click(`#deliver_to_billingaddr`);
             await this.fillShippingInfo();
-            await this.page.waitFor(5000);
+            await this.page.waitForNavigation({waitUntil: "networkidle2"});
             await this.page.waitForSelector(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
             await this.page.click(`#middle_sub > form > div.basketedit_summary > div > div.basketedit_summary_buttons.table_display > div:nth-child(3) > button`);
-            await this.page.waitFor(1500);
-            console.log('passhere');
+            await this.page.waitForNavigation({waitUntil: "networkidle2"});
 
             const shippingPrice = await this.page.evaluate(() => {
                 return parseFloat(document.querySelector(`div.worth_box`).textContent.replace(/(zł)|(\s)/g, ''));
@@ -67,16 +77,17 @@ export default class sideone {
 
     async createPageAndAddToCart(variantIndex, variant) {
         const page = await this.bro.newPage();
+        await page.setViewport({width: 1650, height: 1024});
 
         page.setRequestInterception(true);
         page.on('request', request => {
-            if (request.url().endsWith('.png') || request.url().endsWith('.jpg') || request.url().endsWith('.gif'))
+            if (request.url().includes('.png') || request.url().includes('.jpg') || request.url().includes('.gif'))
                 request.abort();
             else
                 request.continue();
         });
 
-        await page.goto(variant.shopId);
+        await page.goto(variant.shopId, {waitUntil: 'networkidle2'});
 
         const itemIsAvailable = await page.evaluate(() => {
             return document.querySelector(`#projector_status_description`).textContent === 'W magazynie';
@@ -106,13 +117,9 @@ export default class sideone {
         //basket is not empty, we must clear it
         if (elementCountInBasket) {
             for (const basketElement of _.range(elementCountInBasket)) {
-                console.log('remove one');
-
                 await this.removeOneElementFromBasket();
             }
         }
-
-        console.log('basket now empty');
     }
 
     async login() {
@@ -133,7 +140,7 @@ export default class sideone {
         await this.page.type(`#client_street`, config.gram.address);
         await this.page.type(`#client_zipcode`, config.gram.zip);
         await this.page.type(`#client_city`, config.gram.city);
-
+        await this.page.waitFor(`#delivery_region`);
         await this.page.select(`#delivery_region`, countryCodes[this.destinationAddress.country]);
         await this.page.type(`#delivery_firstname`, this.destinationAddress.first_name);
         await this.page.type(`#delivery_lastname`, this.destinationAddress.last_name);
@@ -158,3 +165,4 @@ export default class sideone {
         await this.page.click(`#submit_noregister`);
     }
 }
+
