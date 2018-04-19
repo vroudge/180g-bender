@@ -11,6 +11,9 @@ export default (job, ctx, done) => ({
     concurrency: 1,
     processor: async (job, ctx, done) => {
         let browser, result;
+        const idGen = new shortUid().randomUUID();
+        const userDataFlag = `/tmp/pup-${idGen}`;
+
         try {
             const {retailers, cart, destinationAddress, jobId} = job.data;
             const orderRaw = cart.content.vinyls;
@@ -44,9 +47,6 @@ export default (job, ctx, done) => ({
                 return acc;
             }, {});
 
-            const idGen = new shortUid().randomUUID();
-            const userDataFlag = `/tmp/pup-${idGen}`;
-
             if (process.env.NODE_ENV === 'production') {
                 const prodArgs = [`--user-data-dir=${userDataFlag}`,
                     '--no-sandbox',
@@ -74,7 +74,7 @@ export default (job, ctx, done) => ({
                 ];
                 //use proxy for sideone
                 if (variants['sideone']) {
-                    devArgs.push(`--proxy-server=34.249.225.224:27631`)
+                    devArgs.push(`--proxy-server=34.246.126.242:27631`)
                 }
                 browser = await puppeteer.launch({
                     headless: true,
@@ -95,19 +95,35 @@ export default (job, ctx, done) => ({
             );
             logger.nfo(' 4 - Bender done');
 
-            await new Promise(function (resolve, reject) {
-                rimraf(userDataFlag, (err, res) => {
-                    if (err) reject(err);
-                    return resolve();
-                });
-            });
+
             logger.nfo(` 5 - Done cleanup`);
             await browser.close();
         } catch (e) {
             if (browser) await browser.close();
             logger.err(`4 - Error in get-shipping`, {...e, stack: e.stack});
+
+            await (new Promise(function (resolve, reject) {
+                rimraf(userDataFlag, (err, res) => {
+                    if (err) {
+
+                        return reject(err);
+                    }
+                    return resolve();
+                });
+            }));
+
             return done(e);
         }
+        await (new Promise(function (resolve, reject) {
+            rimraf(userDataFlag, (err, res) => {
+                if (err) {
+
+                    return reject(err);
+                }
+                return resolve();
+            });
+        }));
+
         return done(null, JSON.stringify(result));
     },
 });
