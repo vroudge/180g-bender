@@ -31,6 +31,9 @@ export default class Juno {
 
             things.push('Done with availability');
             await this.page.goto('https://www.juno.co.uk/cart/');
+            await this.page.waitForSelector(`input.btn.btn-primary`);
+            await this.page.click(`input.btn.btn-primary`);
+            await this.page.goto(`https://www.juno.co.uk/cart/change-country/`);
             things.push('Done going to cart');
             await this.page.waitForSelector(`select.delivery_country`);
             things.push('Done waiting for delivery country');
@@ -43,7 +46,6 @@ export default class Juno {
             const shippingPrice = await this.page.evaluate(() => {
                 return document.querySelector(`#shipping_val`).textContent.replace('€', '');
             });
-
             things.push('Done calculating shipping price');
 
             if (checkout) {
@@ -79,19 +81,16 @@ export default class Juno {
             else
                 request.continue();
         });
-
-        await page.goto(variant.shopId);
-
+        const itemLink = variant.shopId.split('/products/')[1].replace('-','/');
+        await page.goto(`https://www.juno.co.uk/cart/add/${itemLink}/?popup=1`);
+        await page.waitForSelector(`#cart-info-messages`);
         const itemIsAvailable = await page.evaluate(() => {
-            return document.querySelectorAll('a.btn.btn-cta.btn-prod-alert.mb-2').length === 0;
+            return document.querySelector('#cart-info-messages > div > span').innerHTML.includes('Added to cart');
         });
 
         this.variants[variantIndex].available = itemIsAvailable;
-
-        if (itemIsAvailable) {
-            await page.click('.btn.btn-cta.mb-2.ml-2');
-            await page.waitFor(2000);
-        }
+        await page.reload();
+        await page.waitFor(1000);
         await page.close();
         return itemIsAvailable;
     }

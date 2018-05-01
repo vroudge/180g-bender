@@ -7,7 +7,7 @@ import logger from './lib/logger'
         process.exit(1);
     });
     process.on('unhandledRejection', (reason, promise) => {
-        logger.err('Bender - unhandled rejection', {reason, promise})
+        logger.err('Bender - unhandled rejection', {reason, promise});
         process.exit(1);
     });
     try {
