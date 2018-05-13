@@ -10,7 +10,6 @@ export default (job, ctx, done) => ({
     jobName: 'get-shipping',
     concurrency: 1,
     processor: async (job, ctx, done) => {
-        console.log(job.data)
         let browser, result;
         const idGen = new shortUid().randomUUID();
         const userDataFlag = `/tmp/pup-${idGen}`;
