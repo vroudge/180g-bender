@@ -10,14 +10,14 @@ export default (job, ctx, done) => ({
     jobName: 'get-shipping',
     concurrency: 1,
     processor: async (job, ctx, done) => {
+        console.log(job.data)
         let browser, result;
         const idGen = new shortUid().randomUUID();
         const userDataFlag = `/tmp/pup-${idGen}`;
-
         try {
             const {retailers, cart, destinationAddress, jobId} = job.data;
             const orderRaw = cart.content.vinyls;
-            logger.nfo(' 1 - Querying shipping data in retailers', job.data.cart);
+            logger.nfo(' 1 - Querying shipping data in retailers');
             //cleanup cart object for use
             const order = _.map(orderRaw, (elem, key) => {
                 const retailerForVariant = _.find(retailers, retailer => retailer.id === elem.retailerId).name;
