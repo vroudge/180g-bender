@@ -73,7 +73,7 @@ export default (job, ctx, done) => ({
                 ];
                 //use proxy for sideone
                 if (variants['sideone']) {
-                    devArgs.push(`--proxy-server=34.246.126.242:27631`)
+                    devArgs.push(`--proxy-server=34.246.143.198:27631`)
                 }
                 browser = await puppeteer.launch({
                     headless: true,
