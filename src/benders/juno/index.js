@@ -83,16 +83,23 @@ export default class Juno {
         });
         const itemLink = variant.shopId.split('/products/')[1].replace('-','/');
         await page.goto(`https://www.juno.co.uk/cart/add/${itemLink}/?popup=1`);
-        await page.waitForSelector(`#cart-info-messages`);
-        const itemIsAvailable = await page.evaluate(() => {
-            return document.querySelector('#cart-info-messages > div > span').innerHTML.includes('Added to cart');
-        });
+        try {
+            await page.waitForSelector(`#cart-info-messages`);
 
-        this.variants[variantIndex].available = itemIsAvailable;
-        await page.reload();
-        await page.waitFor(1000);
-        await page.close();
-        return itemIsAvailable;
+            const itemIsAvailable = await page.evaluate(() => {
+                return document.querySelector('#cart-info-messages > div > span').innerHTML.includes('Added to cart');
+            });
+
+            this.variants[variantIndex].available = itemIsAvailable;
+            await page.reload();
+            await page.waitFor(1000);
+            await page.close();
+            return itemIsAvailable;
+        } catch(e) {
+            await page.waitFor(1000);
+            await page.close();
+        }
+        return false
     }
 
     async login() {
